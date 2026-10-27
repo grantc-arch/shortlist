@@ -1,0 +1,129 @@
+import { describe, expect, it } from "vitest";
+import {
+  DEFAULT_WEIGHTS,
+  normaliseWeights,
+  parseList,
+  scoreMatch,
+  skillsMatch,
+  type CandidateForMatching,
+  type JobForMatching,
+} from "./matching";
+
+const job: JobForMatching = {
+  city: "Cape Town",
+  workplace: "on_site",
+  startDate: "2026-11-01",
+  minQualification: "degree",
+  fieldKeywords: ["marketing"],
+  minYearsExperience: 1,
+  skills: ["Microsoft Excel", "Outlook", "Canva", "Diary management"],
+  mustHaves: ["Reliable transport", "Proficient in Microsoft Office"],
+  weights: DEFAULT_WEIGHTS,
+};
+
+const ideal: CandidateForMatching = {
+  city: "Cape Town",
+  willingToRelocate: false,
+  qualificationLevel: "degree",
+  fieldOfStudy: "Marketing Management",
+  yearsExperience: 2,
+  skills: ["Excel", "Outlook", "Canva", "Diary management", "Photography"],
+  availableFrom: "2026-10-30",
+};
+
+describe("scoreMatch", () => {
+  it("gives a perfect candidate 100", () => {
+    const r = scoreMatch(job, ideal);
+    expect(r.total).toBe(100);
+    expect(r.criteria.every((c) => c.fraction === 1)).toBe(true);
+  });
+
+  it("criterion points add up to the total", () => {
+    const r = scoreMatch(job, { ...ideal, yearsExperience: 0, skills: ["Canva"], city: "Durban" });
+    const sum = r.criteria.reduce((s, c) => s + c.points, 0);
+    expect(Math.round(sum)).toBe(r.total);
+  });
+
+  it("penalises a degree in the wrong field but credits the level", () => {
+    const r = scoreMatch(job, { ...ideal, fieldOfStudy: "Accounting" });
+    const q = r.criteria.find((c) => c.key === "qualification")!;
+    expect(q.fraction).toBeCloseTo(0.6);
+    expect(q.detail).toContain("doesn't match");
+  });
+
+  it("gives partial credit for a lower qualification", () => {
+    const r = scoreMatch(job, { ...ideal, qualificationLevel: "diploma" });
+    const q = r.criteria.find((c) => c.key === "qualification")!;
+    // diploma is level 3 of the required 4 → 0.75 of the level part (0.6) + field part (0.4)
+    expect(q.fraction).toBeCloseTo(0.75 * 0.6 + 0.4);
+  });
+
+  it("scores skills by overlap and names what's missing", () => {
+    const r = scoreMatch(job, { ...ideal, skills: ["excel", "canva"] });
+    const s = r.criteria.find((c) => c.key === "skills")!;
+    expect(s.fraction).toBe(0.5);
+    expect(s.detail).toContain("Outlook");
+    expect(s.detail).toContain("Diary management");
+  });
+
+  it("treats nearby towns as commutable", () => {
+    const r = scoreMatch(job, { ...ideal, city: "Stellenbosch" });
+    expect(r.criteria.find((c) => c.key === "location")!.fraction).toBe(0.75);
+  });
+
+  it("scores far-away candidates by willingness to relocate", () => {
+    const stay = scoreMatch(job, { ...ideal, city: "Durban", willingToRelocate: false });
+    const move = scoreMatch(job, { ...ideal, city: "Durban", willingToRelocate: true });
+    expect(stay.criteria.find((c) => c.key === "location")!.fraction).toBe(0);
+    expect(move.criteria.find((c) => c.key === "location")!.fraction).toBe(0.5);
+  });
+
+  it("ignores location for remote roles", () => {
+    const r = scoreMatch({ ...job, workplace: "remote" }, { ...ideal, city: "Durban" });
+    expect(r.criteria.find((c) => c.key === "location")!.fraction).toBe(1);
+  });
+
+  it("reduces availability the later a candidate can start", () => {
+    const at = (d: string) =>
+      scoreMatch(job, { ...ideal, availableFrom: d }).criteria.find((c) => c.key === "availability")!.fraction;
+    expect(at("2026-11-01")).toBe(1);
+    expect(at("2026-11-10")).toBe(0.7);
+    expect(at("2026-11-25")).toBe(0.4);
+    expect(at("2027-02-01")).toBe(0.1);
+  });
+
+  it("respects employer weights", () => {
+    const skillsOnly = { ...job, weights: { qualification: 0, experience: 0, skills: 100, location: 0, availability: 0 } };
+    const r = scoreMatch(skillsOnly, { ...ideal, skills: ["Canva"], qualificationLevel: "none", city: "Durban" });
+    expect(r.total).toBe(25);
+  });
+
+  it("flags but doesn't zero out unmet must-haves", () => {
+    const r = scoreMatch(job, ideal, [true, false]);
+    expect(r.mustHavesMet).toBe(false);
+    expect(r.total).toBe(100);
+    expect(r.mustHaves[1]).toEqual({ question: "Proficient in Microsoft Office", answer: false });
+  });
+
+  it("leaves must-haves unknown before the candidate applies", () => {
+    expect(scoreMatch(job, ideal).mustHavesMet).toBeNull();
+  });
+});
+
+describe("helpers", () => {
+  it("matches skills loosely", () => {
+    expect(skillsMatch("Microsoft Excel", "excel")).toBe(true);
+    expect(skillsMatch("Canva", "Photoshop")).toBe(false);
+    expect(skillsMatch("", "Excel")).toBe(false);
+  });
+
+  it("parses comma and newline lists without duplicates", () => {
+    expect(parseList("Excel, Outlook\ncanva,, excel ")).toEqual(["Excel", "Outlook", "canva"]);
+  });
+
+  it("falls back to default weights when all are zero", () => {
+    expect(normaliseWeights({ skills: 0 })).toEqual(DEFAULT_WEIGHTS);
+    expect(normaliseWeights({ skills: 50.4, location: -3 }).skills).toBe(50);
+    expect(normaliseWeights({ skills: 50, location: -3 }).location).toBe(0);
+  });
+});

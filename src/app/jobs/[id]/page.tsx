@@ -1,0 +1,195 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { getApplication, getCandidate, getJob } from "@/lib/queries";
+import { scoreMatch } from "@/lib/matching";
+import { candidateForMatching, formatDate, jobForMatching, profileGaps } from "@/lib/format";
+import { qualificationLabel, STATUS_LABELS } from "@/lib/constants";
+import { FitBar, FitBreakdown, ScoreNumber } from "@/components/fit-bar";
+import { JobMeta } from "@/components/job-list";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const row = await getJob((await params).id);
+  return { title: row ? `${row.job.title} at ${row.employer.companyName}` : "Job not found" };
+}
+
+export default async function JobPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const row = await getJob(id);
+  if (!row) notFound();
+  const { job, employer } = row;
+
+  const session = await getSession();
+  const isOwner = session?.role === "employer" && session.userId === job.employerId;
+  if (job.status === "closed" && !isOwner) {
+    // Closed jobs stay visible to people who applied, so their application history makes sense.
+    const applied = session?.role === "candidate" && (await getApplication(job.id, session.userId));
+    if (!applied) notFound();
+  }
+
+  const candidate = session?.role === "candidate" ? await getCandidate(session.userId) : null;
+  const application = candidate ? await getApplication(job.id, candidate.userId) : null;
+  const match = candidate
+    ? scoreMatch(jobForMatching(job), candidateForMatching(candidate), application?.mustHaveAnswers ?? null)
+    : null;
+  const gaps = candidate ? profileGaps(candidate) : [];
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
+      <article className="min-w-0">
+        <Link href="/jobs" className="text-sm text-muted hover:text-ink">
+          All jobs
+        </Link>
+        <h1 className="mt-2 text-4xl font-bold sm:text-5xl">{job.title}</h1>
+        <p className="mt-2 text-lg text-ink-2">
+          {employer.companyName}
+          {job.status === "closed" && <span className="ml-2 text-bad">Closed to new applications</span>}
+        </p>
+        <div className="mt-4">
+          <JobMeta job={job} />
+        </div>
+        {job.closesOn && <p className="mt-1 text-sm text-muted">Applications close {formatDate(job.closesOn)}</p>}
+
+        {match && (
+          // On small screens the full breakdown sits below the description, so show the headline score here.
+          <a href="#match" className="panel mt-5 block p-4 lg:hidden">
+            <span className="flex items-baseline justify-between">
+              <span className="font-semibold">Your match</span>
+              <ScoreNumber total={match.total} className="text-2xl" />
+            </span>
+            <span className="mt-2 block">
+              <FitBar criteria={match.criteria} />
+            </span>
+            <span className="mt-2 block text-sm text-ink-2">See the breakdown{application ? "" : " and apply"} below</span>
+          </a>
+        )}
+
+        <section className="mt-8 max-w-prose">
+          <h2 className="text-xl font-semibold">About the role</h2>
+          <div className="mt-2 space-y-3 whitespace-pre-line text-ink-2">{job.description}</div>
+        </section>
+
+        {job.responsibilities.length > 0 && (
+          <section className="mt-8 max-w-prose">
+            <h2 className="text-xl font-semibold">What you'll do</h2>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-2 marker:text-muted">
+              {job.responsibilities.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="mt-8 max-w-prose">
+          <h2 className="text-xl font-semibold">What they're looking for</h2>
+          <dl className="mt-3 grid gap-x-6 gap-y-3 sm:grid-cols-[11rem_1fr]">
+            <dt className="font-semibold">Qualification</dt>
+            <dd className="text-ink-2">
+              {qualificationLabel(job.minQualification)} or higher
+              {job.fieldKeywords.length > 0 && <>, in {job.fieldKeywords.join(" or ")} or a related field</>}
+            </dd>
+            <dt className="font-semibold">Experience</dt>
+            <dd className="text-ink-2">
+              {job.minYearsExperience > 0
+                ? `At least ${job.minYearsExperience} year${job.minYearsExperience === 1 ? "" : "s"}`
+                : "None required"}
+            </dd>
+            {job.skills.length > 0 && (
+              <>
+                <dt className="font-semibold">Skills</dt>
+                <dd>
+                  <ul className="flex flex-wrap gap-1.5">
+                    {job.skills.map((s) => (
+                      <li key={s} className="rounded bg-sunken px-2 py-0.5 text-sm text-ink-2">
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+          </dl>
+        </section>
+
+        {job.mustHaves.length > 0 && (
+          <section className="mt-8 max-w-prose">
+            <h2 className="text-xl font-semibold">Must-haves</h2>
+            <p className="mt-1 text-sm text-muted">You'll be asked to confirm each of these when you apply.</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-2 marker:text-accent">
+              {job.mustHaves.map((m) => (
+                <li key={m}>{m}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {employer.about && (
+          <section className="mt-8 max-w-prose">
+            <h2 className="text-xl font-semibold">About {employer.companyName}</h2>
+            <p className="mt-2 text-ink-2">{employer.about}</p>
+          </section>
+        )}
+      </article>
+
+      <aside id="match" className="scroll-mt-4 lg:sticky lg:top-6 lg:self-start">
+        <div className="panel p-5">
+          {isOwner ? (
+            <>
+              <h2 className="font-semibold">This is your listing</h2>
+              <p className="mt-1 text-sm text-ink-2">See everyone who applied, ranked by match.</p>
+              <Link href={`/employer/jobs/${job.id}`} className="btn btn-primary mt-4 w-full">
+                View applicants
+              </Link>
+            </>
+          ) : candidate && match ? (
+            <>
+              <FitBreakdown match={match} heading="Your match" />
+              <div className="mt-5 border-t border-line pt-4">
+                {application ? (
+                  <>
+                    <p className="font-semibold">You applied {formatDate(application.createdAt)}</p>
+                    <p className="text-sm text-ink-2">Status: {STATUS_LABELS[application.status]}</p>
+                    <Link href="/candidate" className="btn mt-3 w-full">
+                      See my applications
+                    </Link>
+                  </>
+                ) : gaps.length > 0 ? (
+                  <>
+                    <p className="text-sm text-ink-2">
+                      Before you can apply, add your {gaps.join(", ")}. A complete profile also makes your match score
+                      accurate.
+                    </p>
+                    <Link href={`/candidate/profile?next=/jobs/${job.id}`} className="btn btn-primary mt-3 w-full">
+                      Complete my profile
+                    </Link>
+                  </>
+                ) : (
+                  <Link href={`/jobs/${job.id}/apply`} className="btn btn-primary w-full">
+                    Apply for this job
+                  </Link>
+                )}
+              </div>
+            </>
+          ) : session?.role === "employer" ? (
+            <p className="text-sm text-ink-2">You're signed in as an employer, so you can't apply for jobs.</p>
+          ) : (
+            <>
+              <h2 className="font-semibold">See how well you match</h2>
+              <p className="mt-1 text-sm text-ink-2">
+                Create a free profile and every job shows your score, broken down by qualification, experience, skills,
+                location and availability.
+              </p>
+              <Link href={`/signup?next=/jobs/${job.id}`} className="btn btn-primary mt-4 w-full">
+                Create a profile
+              </Link>
+              <Link href={`/login?next=/jobs/${job.id}`} className="btn mt-2 w-full">
+                Log in
+              </Link>
+            </>
+          )}
+        </div>
+      </aside>
+    </div>
+  );
+}
