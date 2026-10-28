@@ -3,7 +3,8 @@
  * so nothing a candidate typed is ever overwritten; skills are added to.
  */
 import type { CvSuggestions } from "./cv-extraction";
-import { parseList, skillsMatch, type Qualification } from "./matching";
+import { parseList, type Qualification } from "./matching";
+import { normaliseSkills, sameSkill } from "./skills";
 
 export interface ProfileDraft {
   fullName: string;
@@ -54,7 +55,7 @@ export function mergeSuggestions(draft: ProfileDraft, s: CvSuggestions): { draft
   }
 
   const current = parseList(draft.skills);
-  const added = s.skills.filter((skill) => !current.some((c) => skillsMatch(c, skill)));
+  const added = normaliseSkills(s.skills).filter((skill) => !current.some((c) => sameSkill(c, skill)));
   if (added.length > 0) {
     next.skills = [...current, ...added].slice(0, 30).join(", ");
     filled.push("skills");

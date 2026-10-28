@@ -9,6 +9,7 @@
  */
 import { COMMUTABLE } from "./constants";
 import { COMMUTE_KM, LOCAL_KM, coordsFor, distanceKm } from "./places";
+import { hasSkill, sameSkill } from "./skills";
 
 export const QUALIFICATION_ORDER = [
   "none",
@@ -84,13 +85,8 @@ export interface MatchResult {
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
-/** Two skills match if they're equal or one contains the other ("Excel" ~ "Microsoft Excel"). */
-export function skillsMatch(a: string, b: string): boolean {
-  const x = norm(a);
-  const y = norm(b);
-  if (!x || !y) return false;
-  return x === y || x.includes(y) || y.includes(x);
-}
+/** Two skills match if they mean the same thing ("Excel" ~ "MS Excel" ~ "spreadsheets"). See lib/skills. */
+export const skillsMatch = sameSkill;
 
 function scoreQualification(job: JobForMatching, c: CandidateForMatching) {
   const required = QUALIFICATION_ORDER.indexOf(job.minQualification);
@@ -129,7 +125,7 @@ function scoreExperience(job: JobForMatching, c: CandidateForMatching) {
 
 function scoreSkills(job: JobForMatching, c: CandidateForMatching) {
   if (job.skills.length === 0) return { fraction: 1, detail: "No specific skills listed" };
-  const matched = job.skills.filter((s) => c.skills.some((cs) => skillsMatch(s, cs)));
+  const matched = job.skills.filter((s) => hasSkill(c.skills, s));
   const missing = job.skills.filter((s) => !matched.includes(s));
   const fraction = matched.length / job.skills.length;
   const detail =

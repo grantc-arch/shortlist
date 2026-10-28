@@ -5,6 +5,7 @@ import { saveJob } from "@/app/actions/employer";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
 import { BENEFITS, EMPLOYMENT_LABELS, QUALIFICATIONS, WORKPLACE_LABELS } from "@/lib/constants";
 import { PlaceField } from "@/components/place-input";
+import { SkillField } from "@/components/skill-picker";
 import type { Place } from "@/lib/places";
 import { CRITERIA, DEFAULT_WEIGHTS, type Weights } from "@/lib/matching";
 import type { Job } from "@/db/schema";
@@ -110,8 +111,12 @@ export function JobForm({ job, defaultPlace }: { job?: Job; defaultPlace: Place 
             <input className="input num" id="minYearsExperience" name="minYearsExperience" type="number" min={0} max={30} defaultValue={job?.minYearsExperience ?? 0} />
           </Field>
         </div>
-        <Field label="Skills" id="skills" hint="Comma-separated. Name software specifically: Excel, Outlook, Canva.">
-          <textarea className="input min-h-20" id="skills" name="skills" defaultValue={job?.skills.join(", ")} />
+        <Field
+          label="Skills"
+          id="skills"
+          hint="Pick from the suggestions where you can, so different wordings still match (a candidate's “MS Office” counts for Excel). Press Enter to add your own."
+        >
+          <SkillField id="skills" name="skills" defaultValue={job?.skills} max={25} describedBy="skills-hint" />
         </Field>
         <Field
           label="Must-haves"
@@ -187,7 +192,7 @@ function Field({ label, id, hint, children }: { label: string; id: string; hint?
     <div>
       <label className="label" htmlFor={id}>{label}</label>
       {children}
-      {hint && <p className="hint">{hint}</p>}
+      {hint && <p id={`${id}-hint`} className="hint">{hint}</p>}
     </div>
   );
 }

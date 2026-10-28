@@ -15,6 +15,7 @@ import bcrypt from "bcryptjs";
 import { closeDb, db, schema } from "../src/db";
 import type { Weights } from "../src/lib/matching";
 import { CITY_COORDS } from "../src/lib/places";
+import { normaliseSkills } from "../src/lib/skills";
 
 const PASSWORD = "demo-password";
 const RESET = process.argv.includes("--reset");
@@ -77,6 +78,7 @@ async function createCandidate(c: CandidateSeed) {
     .returning();
   await db.insert(schema.candidates).values({
     ...profile,
+    skills: normaliseSkills(profile.skills ?? []),
     userId: u.id,
     cvFileName: `${profile.fullName.replace(/\s+/g, "_")}_CV.pdf`,
     cvData: demoCv(profile.fullName, cvLines),

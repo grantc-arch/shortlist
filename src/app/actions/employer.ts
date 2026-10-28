@@ -12,6 +12,7 @@ import { normaliseWeights, parseLines, parseList, QUALIFICATION_ORDER } from "@/
 import { getJob, invitationsSentToday, isUuid, talentPoolFor } from "@/lib/queries";
 import { isAcceptingApplications, todayInSA } from "@/lib/jobs";
 import { BENEFIT_KEYS } from "@/lib/constants";
+import { normaliseSkills } from "@/lib/skills";
 import { scoreMatch } from "@/lib/matching";
 import { jobForMatching } from "@/lib/format";
 import { sendEmail } from "@/lib/email";
@@ -67,7 +68,7 @@ function parseJobForm(form: FormData) {
     minQualification: form.get("minQualification"),
     fieldKeywords: parseList(String(form.get("fieldKeywords") ?? "")),
     minYearsExperience: form.get("minYearsExperience") || 0,
-    skills: parseList(String(form.get("skills") ?? "")),
+    skills: normaliseSkills(parseList(String(form.get("skills") ?? ""))),
     mustHaves: lines("mustHaves"),
     benefits: [...new Set(form.getAll("benefits").map(String))].filter((b) => (BENEFIT_KEYS as string[]).includes(b)),
   });

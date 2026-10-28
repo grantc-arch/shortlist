@@ -178,3 +178,9 @@ textarea.input {
     transition: width 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
   }
 }
+
+/* The skill picker's text box sits inside a bordered box that shows the focus ring itself. */
+.skill-input:focus,
+.skill-input:focus-visible {
+  outline: none;
+}

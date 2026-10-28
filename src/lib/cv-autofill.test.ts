@@ -40,8 +40,8 @@ describe("normaliseExtraction", () => {
     expect(s.hasOwnTransport).toBe(true);
   });
 
-  it("de-duplicates skills and keeps commas from splitting one skill into two", () => {
-    expect(normaliseExtraction(raw).skills).toEqual(["Excel", "Outlook", "Diary management minute taking"]);
+  it("uses standard skill names, splits listed skills and drops duplicates", () => {
+    expect(normaliseExtraction(raw).skills).toEqual(["Microsoft Excel", "Outlook", "Diary management", "Minute taking"]);
   });
 
   it("drops values that don't fit the profile", () => {
@@ -95,7 +95,7 @@ describe("mergeSuggestions", () => {
     expect(draft.qualificationLevel).toBe("degree");
     expect(draft.yearsExperience).toBe(2);
     expect(draft.hasOwnTransport).toBe(true);
-    expect(draft.skills).toBe("Excel, Outlook, Diary management minute taking");
+    expect(draft.skills).toBe("Microsoft Excel, Outlook, Diary management, Minute taking");
     expect(filled).toEqual(
       expect.arrayContaining(["fullName", "phone", "city", "fieldOfStudy", "summary", "qualificationLevel", "yearsExperience", "hasOwnTransport", "skills"]),
     );
@@ -118,7 +118,7 @@ describe("mergeSuggestions", () => {
     expect(draft.yearsExperience).toBe(1);
     expect(draft.summary).toBe("My own words.");
     // "Excel" already matches "Microsoft Excel", so only the new skills are added.
-    expect(draft.skills).toBe("Microsoft Excel, Canva, Outlook, Diary management minute taking");
+    expect(draft.skills).toBe("Microsoft Excel, Canva, Outlook, Diary management, Minute taking");
     expect(filled).not.toContain("fullName");
     expect(filled).not.toContain("city");
   });

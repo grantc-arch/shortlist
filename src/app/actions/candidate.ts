@@ -9,6 +9,7 @@ import { requireRole } from "@/lib/auth";
 import { MAX_CV_BYTES } from "@/lib/constants";
 import { parsePlace } from "@/lib/places";
 import { parseList, QUALIFICATION_ORDER } from "@/lib/matching";
+import { normaliseSkills } from "@/lib/skills";
 import { getApplication, getCandidate, getJob, isUuid } from "@/lib/queries";
 import { profileGaps } from "@/lib/format";
 import { isAcceptingApplications } from "@/lib/jobs";
@@ -53,7 +54,7 @@ export async function saveProfile(_: FormState, form: FormData): Promise<FormSta
     qualificationLevel: form.get("qualificationLevel"),
     fieldOfStudy: form.get("fieldOfStudy") ?? "",
     yearsExperience: form.get("yearsExperience"),
-    skills: parseList(String(form.get("skills") ?? "")),
+    skills: normaliseSkills(parseList(String(form.get("skills") ?? ""))),
     summary: form.get("summary") ?? "",
     hasOwnTransport: form.get("hasOwnTransport") === "on",
     availableFrom: form.get("availableFrom"),

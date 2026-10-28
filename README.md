@@ -20,13 +20,15 @@ Each job is scored on five criteria. The employer sets a weight for each (the we
 | --- | --- |
 | Qualification | 60% for meeting the minimum level (partial credit below it), 40% for a field of study matching the job's keywords |
 | Experience | Years of relevant experience against the minimum, capped at full marks |
-| Skills | Share of the job's listed skills the candidate has (loose matching, so "Excel" matches "Microsoft Excel") |
+| Skills | Share of the job's listed skills the candidate has. Skills are matched by meaning, not wording (see below) |
 | Location | Straight-line distance: within 25 km 100%, within 60 km (commutable) 75%, further away 50% if willing to relocate, otherwise 0%. Remote roles always 100%. Places without coordinates fall back to comparing names |
 | Availability | Can start by the start date 100%, within 2 weeks 70%, within a month 40%, later 10% |
 
 **Must-haves** are yes/no questions the candidate answers when applying. A "no" is flagged and sorts the applicant below everyone who meets all must-haves, but they stay visible.
 
 The score is drawn as one bar split into five coloured lanes. Each lane's width is the employer's weight; how much of it is filled is how well the candidate meets that criterion, so the gaps show exactly where points were lost.
+
+**Skills** are picked as tags. As you type, the picker suggests standard names from a list of about 80 common skills ([`src/lib/skills.ts`](src/lib/skills.ts)), and anything typed is mapped to its standard name, so "MS Excel", "excel" and "spreadsheets" all become Microsoft Excel, and "calendar management" becomes Diary management. Suites count for their programs: a candidate with "MS Office" has Excel, Word, Outlook, PowerPoint and Teams. Skills that aren't on the list still work: they're kept as typed and matched loosely. CV auto-fill uses the same names.
 
 The engine is a pure function in [`src/lib/matching.ts`](src/lib/matching.ts) with unit tests in [`src/lib/matching.test.ts`](src/lib/matching.test.ts).
 

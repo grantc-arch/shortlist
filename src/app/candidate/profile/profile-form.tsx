@@ -5,6 +5,8 @@ import { autofillFromCv, saveProfile } from "@/app/actions/candidate";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
 import { QUALIFICATIONS } from "@/lib/constants";
 import { PlaceInput } from "@/components/place-input";
+import { SkillPicker } from "@/components/skill-picker";
+import { parseList } from "@/lib/matching";
 import { mergeSuggestions, type DraftField, type ProfileDraft } from "@/lib/autofill-merge";
 import type { CandidateRow } from "@/lib/queries";
 
@@ -154,10 +156,16 @@ export function ProfileForm({
             <Field
               label="Skills"
               id="skills"
-              hint="Separate with commas. Name software specifically, e.g. Excel, Outlook, Canva, Google Workspace."
+              hint="Pick from the suggestions where you can, so employers' wording still matches yours. Press Enter to add your own."
               fromCv={tag("skills")}
             >
-              <textarea className="input min-h-20" id="skills" name="skills" value={draft.skills} onChange={(e) => set("skills", e.target.value)} required />
+              <SkillPicker
+                id="skills"
+                name="skills"
+                value={parseList(draft.skills)}
+                onChange={(list) => set("skills", list.join(", "))}
+                describedBy="skills-hint"
+              />
             </Field>
           </div>
           <div className="mt-4">
@@ -326,7 +334,7 @@ function Field({
         {fromCv && <FromCvTag />}
       </label>
       {children}
-      {hint && <p className="hint">{hint}</p>}
+      {hint && <p id={`${id}-hint`} className="hint">{hint}</p>}
     </div>
   );
 }

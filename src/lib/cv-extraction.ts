@@ -4,7 +4,8 @@
  */
 import { z } from "zod";
 import { CITIES } from "./constants";
-import { parseLines, QUALIFICATION_ORDER, type Qualification } from "./matching";
+import { QUALIFICATION_ORDER, type Qualification } from "./matching";
+import { normaliseSkills } from "./skills";
 
 export const PHONE_PATTERN = /^\+?[0-9 ()-]{9,16}$/;
 
@@ -105,8 +106,8 @@ export function normaliseExtraction(raw: CvExtraction): CvSuggestions {
     qualificationLevel: matchQualification(raw.qualificationLevel),
     fieldOfStudy: clean(raw.fieldOfStudy, 120),
     yearsExperience: years >= 0 ? Math.min(years, 50) : undefined,
-    // Skills are saved comma-separated, so commas inside a skill would split it.
-    skills: parseLines(raw.skills.map((s) => s.replace(/,/g, " ").replace(/\s+/g, " ").slice(0, 60)).join("\n")).slice(0, 30),
+    // "Diary management, minute taking" is two skills; each is matched to its standard name.
+    skills: normaliseSkills(raw.skills.flatMap((s) => s.split(",")).map((s) => s.slice(0, 60))).slice(0, 30),
     summary: clean(raw.summary, 1200),
     hasOwnTransport: raw.hasOwnTransport ?? undefined,
   };
