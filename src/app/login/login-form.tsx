@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { login } from "../actions/auth";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
@@ -16,6 +17,9 @@ export function LoginForm({ next }: { next?: string }) {
       <div>
         <label className="label" htmlFor="password">Password</label>
         <input className="input" id="password" name="password" type="password" autoComplete="current-password" required />
+        <p className="hint">
+          <Link href="/forgot-password" className="link">Forgot your password?</Link>
+        </p>
       </div>
       <FormError error={state?.error} />
       <SubmitButton pending="Logging in…" className="btn btn-primary w-full">Log in</SubmitButton>

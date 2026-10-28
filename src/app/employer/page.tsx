@@ -10,9 +10,9 @@ import { closedReason } from "@/lib/jobs";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-export default async function EmployerHome({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
+export default async function EmployerHome({ searchParams }: { searchParams: Promise<{ saved?: string; passwordReset?: string }> }) {
   const session = await requireRole("employer", "/employer");
-  const { saved } = await searchParams;
+  const { saved, passwordReset } = await searchParams;
   const employer = (await getEmployer(session.userId))!;
   const rows = await jobsForEmployer(session.userId);
 
@@ -46,6 +46,11 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
         </Link>
       </div>
 
+      {passwordReset && (
+        <p role="status" className="rounded-md border border-good/30 bg-good/10 px-4 py-3 text-good">
+          Password changed. You've been logged out on any other devices.
+        </p>
+      )}
       {saved && (
         <p role="status" className="rounded-md border border-good/30 bg-good/10 px-4 py-3 text-good">
           Company details saved.

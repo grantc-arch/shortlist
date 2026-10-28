@@ -57,6 +57,8 @@ export async function getSession(): Promise<Session | null> {
     // Make sure the account still exists (e.g. after a database reset).
     const user = await db.query.users.findFirst({ where: eq(schema.users.id, payload.sub) });
     if (!user) return null;
+    // A password reset signs out every session that started before it.
+    if (user.passwordChangedAt && (payload.iat ?? 0) < Math.floor(user.passwordChangedAt.getTime() / 1000)) return null;
     return { userId: user.id, role: user.role, email: user.email };
   } catch {
     return null;

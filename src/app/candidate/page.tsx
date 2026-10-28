@@ -19,9 +19,9 @@ const STATUS_TONE = {
   declined: "text-muted bg-sunken",
 } as const;
 
-export default async function CandidateHome({ searchParams }: { searchParams: Promise<{ saved?: string; applied?: string }> }) {
+export default async function CandidateHome({ searchParams }: { searchParams: Promise<{ saved?: string; applied?: string; passwordReset?: string }> }) {
   const session = await requireRole("candidate", "/candidate");
-  const { saved, applied } = await searchParams;
+  const { saved, applied, passwordReset } = await searchParams;
   const candidate = (await getCandidate(session.userId))!;
   const me = candidateForMatching(candidate);
   const gaps = profileGaps(candidate);
@@ -43,6 +43,11 @@ export default async function CandidateHome({ searchParams }: { searchParams: Pr
         {justApplied && (
           <p role="status" className="mt-4 rounded-md border border-good/30 bg-good/10 px-4 py-3 text-good">
             Application sent to {justApplied.companyName} for {justApplied.job.title}. You'll see its status change here.
+          </p>
+        )}
+        {passwordReset && (
+          <p role="status" className="mt-4 rounded-md border border-good/30 bg-good/10 px-4 py-3 text-good">
+            Password changed. You've been logged out on any other devices.
           </p>
         )}
         {saved && !justApplied && (

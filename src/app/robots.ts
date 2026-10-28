@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
       // Private dashboards, sign-in pages and CVs have no place in search results.
-      disallow: ["/employer", "/candidate", "/cv/", "/login", "/signup", "/jobs/*/apply"],
+      disallow: ["/employer", "/candidate", "/cv/", "/login", "/signup", "/forgot-password", "/reset-password", "/jobs/*/apply"],
     },
     sitemap: `${siteUrl()}/sitemap.xml`,
   };

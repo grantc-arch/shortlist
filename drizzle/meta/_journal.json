@@ -15,6 +15,13 @@
       "when": 1793171069319,
       "tag": "0001_google_jobs_and_cv_autofill",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793207415581,
+      "tag": "0002_password_reset",
+      "breakpoints": true
     }
   ]
 }
