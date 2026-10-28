@@ -8,6 +8,13 @@
       "when": 1793130018198,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793171069319,
+      "tag": "0001_google_jobs_and_cv_autofill",
+      "breakpoints": true
     }
   ]
 }

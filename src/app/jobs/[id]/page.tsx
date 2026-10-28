@@ -8,10 +8,28 @@ import { candidateForMatching, formatDate, jobForMatching, profileGaps } from "@
 import { qualificationLabel, STATUS_LABELS } from "@/lib/constants";
 import { FitBar, FitBreakdown, ScoreNumber } from "@/components/fit-bar";
 import { JobMeta } from "@/components/job-list";
+import { closedReason } from "@/lib/jobs";
+import { buildJobPosting, isListableOnGoogle, jsonLdScript } from "@/lib/job-posting";
+import { googleJobsEnabled, siteUrl } from "@/lib/site";
+import { formatSalary } from "@/lib/format";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const row = await getJob((await params).id);
-  return { title: row ? `${row.job.title} at ${row.employer.companyName}` : "Job not found" };
+  if (!row) return { title: "Job not found" };
+  const { job, employer } = row;
+  const title = `${job.title} at ${employer.companyName}`;
+  const description = [job.city, formatSalary(job.salaryMin, job.salaryMax), job.description.replace(/\s+/g, " ")]
+    .filter(Boolean)
+    .join(". ")
+    .slice(0, 200);
+  return {
+    title,
+    description,
+    alternates: { canonical: `/jobs/${job.id}` },
+    // Only real, open jobs should appear in search; demo and closed listings are kept out.
+    robots: isListableOnGoogle(job, employer, googleJobsEnabled()) ? undefined : { index: false, follow: true },
+    openGraph: { title, description, type: "website", siteName: "Shortlist", url: `/jobs/${job.id}` },
+  };
 }
 
 export default async function JobPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,7 +40,8 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
 
   const session = await getSession();
   const isOwner = session?.role === "employer" && session.userId === job.employerId;
-  if (job.status === "closed" && !isOwner) {
+  const closed = closedReason(job);
+  if (closed && !isOwner) {
     // Closed jobs stay visible to people who applied, so their application history makes sense.
     const applied = session?.role === "candidate" && (await getApplication(job.id, session.userId));
     if (!applied) notFound();
@@ -34,22 +53,35 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
     ? scoreMatch(jobForMatching(job), candidateForMatching(candidate), application?.mustHaveAnswers ?? null)
     : null;
   const gaps = candidate ? profileGaps(candidate) : [];
+  const jobPosting = isListableOnGoogle(job, employer, googleJobsEnabled())
+    ? jsonLdScript(buildJobPosting(job, employer, siteUrl()))
+    : null;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
+      {jobPosting && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jobPosting }} />}
       <article className="min-w-0">
+        {employer.isDemo && (
+          <p className="mb-5 rounded-md border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-ink">
+            This is a demo listing for a fictional company, there to show how Shortlist works. It isn't a real job.
+          </p>
+        )}
         <Link href="/jobs" className="text-sm text-muted hover:text-ink">
           All jobs
         </Link>
         <h1 className="mt-2 text-4xl font-bold sm:text-5xl">{job.title}</h1>
         <p className="mt-2 text-lg text-ink-2">
           {employer.companyName}
-          {job.status === "closed" && <span className="ml-2 text-bad">Closed to new applications</span>}
+          {closed && <span className="ml-2 text-bad">Closed to new applications</span>}
         </p>
         <div className="mt-4">
           <JobMeta job={job} />
         </div>
-        {job.closesOn && <p className="mt-1 text-sm text-muted">Applications close {formatDate(job.closesOn)}</p>}
+        {job.closesOn && (
+          <p className="mt-1 text-sm text-muted">
+            {closed === "deadline" ? "Applications closed" : "Applications close"} {formatDate(job.closesOn)}
+          </p>
+        )}
 
         {match && (
           // On small screens the full breakdown sits below the description, so show the headline score here.

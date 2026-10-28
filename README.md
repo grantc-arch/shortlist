@@ -4,6 +4,8 @@ A two-sided job board that scores every candidate against every job, and shows b
 
 - **Candidates** build one profile (qualification, experience, skills, location, availability, CV), browse open jobs and see their match score on each before applying.
 - **Employers** post a role, list must-haves, and decide how much each criterion counts. Applicants arrive ranked, with the reasons beside every score. The employer makes every decision; nobody is auto-rejected.
+- **Finding candidates:** open jobs can be listed on Google for Jobs, and every job link shows a preview card when shared on LinkedIn or WhatsApp.
+- **Fast sign-up:** candidates can upload their CV and have Claude fill in their profile for them to check.
 
 ![Ranked applicants](docs/applicants.png)
 
@@ -29,6 +31,33 @@ The engine is a pure function in [`src/lib/matching.ts`](src/lib/matching.ts) wi
 | --- | --- |
 | ![Job page](docs/job.png) | ![Post a job](docs/post-job.png) |
 
+## Google for Jobs
+
+Each open job page carries [JobPosting structured data](https://developers.google.com/search/docs/appearance/structured-data/job-posting), and open jobs are listed in `/sitemap.xml`, so Google can show them in its job search panel. The markup is built in [`src/lib/job-posting.ts`](src/lib/job-posting.ts).
+
+- **Off by default.** It's switched on with `LIST_JOBS_ON_GOOGLE=true`, because Google doesn't allow fake or test postings, and anyone can sign up and post a job on a public demo.
+- **Demo companies are never listed**, and their job pages are labelled as demos and marked `noindex`.
+- **Closed jobs drop out.** A job leaves the sitemap and returns a 404 to visitors once it's closed or its closing date passes (in South African time). Closing dates set `validThrough`.
+- Fully remote jobs are marked `TELECOMMUTE` with applicants limited to South Africa, and the description says so, as Google requires. Hybrid jobs aren't marked remote.
+
+Employers see whether each job is listed, and get a copy-link button and LinkedIn, WhatsApp and email share links. Shared links show a preview image with the job title, company, location and salary:
+
+![Share preview](docs/share-preview.png)
+
+## CV auto-fill
+
+On the profile page, a candidate can upload their CV and press **Fill in from my CV**. The PDF is sent to Claude (`claude-haiku-5-5` by default) using [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs), so the reply always matches a fixed schema: name, phone, city, highest completed qualification, field of study, years of experience, skills, a draft summary, and whether they mention their own transport.
+
+- **Only empty fields are filled.** Nothing the candidate typed is overwritten; skills are added to, not replaced. Each filled field is tagged "From your CV" until they edit it.
+- **Nothing is saved automatically.** The candidate checks the form and saves it themselves. The same file is set as their CV, so they don't choose it twice.
+- **The CV is treated as data**, never as instructions, and the reply is cleaned up before use (unknown cities and qualification wordings are dropped or matched, years are capped, skills de-duplicated).
+- **Limited to 10 reads per person per day**, so the API bill can't run away.
+- **Hidden unless `ANTHROPIC_API_KEY` is set.** Get a key from the [Claude Console](https://console.anthropic.com). Reading a one or two page CV with Haiku costs a fraction of a cent; see [Anthropic's pricing](https://www.anthropic.com/pricing) for current rates.
+
+![CV auto-fill](docs/cv-autofill.png)
+
+The schema and clean-up live in [`src/lib/cv-extraction.ts`](src/lib/cv-extraction.ts), the API call in [`src/lib/cv-autofill.ts`](src/lib/cv-autofill.ts), and the merge rules in [`src/lib/autofill-merge.ts`](src/lib/autofill-merge.ts).
+
 ## Tech stack
 
 - [Next.js](https://nextjs.org) (App Router, server components and server actions), TypeScript, Tailwind CSS
@@ -36,7 +65,8 @@ The engine is a pure function in [`src/lib/matching.ts`](src/lib/matching.ts) wi
 - [PGlite](https://pglite.dev) for local development: real Postgres running inside Node, so there is nothing to install
 - Email and password login with bcrypt-hashed passwords and a signed, HTTP-only session cookie (`jose`)
 - CVs stored in the database (PDF only, 2 MB cap), downloadable only by the candidate and employers they applied to
-- Vitest for the matching engine
+- [Claude API](https://platform.claude.com/docs) (`@anthropic-ai/sdk`) for CV auto-fill
+- Vitest for the matching engine, Google markup and CV auto-fill rules
 
 ## Run it locally
 
@@ -53,10 +83,12 @@ Demo logins (password `demo-password` for both):
 - `employer@example.com`: Lion's Head Marketing, hiring the Administrator role
 - `candidate@example.com`: a marketing graduate who hasn't applied for the Administrator role yet
 
+To try CV auto-fill locally, create a file called `.env.local` in the project folder containing `ANTHROPIC_API_KEY=your-key`, then restart `npm run dev`. All the optional settings are listed in [`.env.example`](.env.example).
+
 Other commands:
 
 ```bash
-npm test                    # matching engine tests
+npm test                    # unit tests
 npm run db:seed -- --reset  # wipe all data and reload the demo data
 npm run db:reset            # delete the local database entirely and set it up again
 ```
@@ -79,8 +111,14 @@ npm run db:reset            # delete the local database entirely and set it up a
    - `AUTH_SECRET`: a long random string. Generate one with
      `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
 5. Deploy. Every push to `main` redeploys.
+6. **Optional: CV auto-fill.** Add `ANTHROPIC_API_KEY` in Vercel and redeploy.
+7. **Optional: Google for Jobs**, once real employers are posting:
+   1. Add `LIST_JOBS_ON_GOOGLE` = `true` in Vercel and redeploy.
+   2. In [Google Search Console](https://search.google.com/search-console), add a **URL prefix** property for your site address and choose the **HTML tag** method. Copy the `content` value into a `GOOGLE_SITE_VERIFICATION` variable, redeploy, then press Verify.
+   3. Under **Sitemaps**, submit `sitemap.xml`.
+   4. Check a job page with Google's [Rich Results Test](https://search.google.com/test/rich-results). Google usually takes a few days to start showing jobs.
 
-When you change `src/db/schema.ts`, run `npm run db:generate` to create a migration, then `npm run db:migrate` locally and against production.
+When you change `src/db/schema.ts`, run `npm run db:generate` to create a migration, then `npm run db:migrate` locally and against production. If you set up your database before CV auto-fill and Google listing were added, run `DATABASE_URL="postgres://..." npm run db:migrate` once to add the new columns.
 
 ## Project layout
 
@@ -88,13 +126,16 @@ When you change `src/db/schema.ts`, run `npm run db:generate` to create a migrat
 src/
   app/
     actions/          server actions: auth, candidate, employer
-    jobs/             job board, job page, apply flow
-    candidate/        candidate dashboard and profile
+    jobs/             job board, job page (with Google markup and share image), apply flow
+    candidate/        candidate dashboard and profile (with CV auto-fill)
     employer/         employer dashboard, post/edit job, ranked applicants
     cv/[candidateId]/ access-controlled CV download
+    sitemap.ts        open jobs for search engines
+    robots.ts         keeps dashboards and CVs out of search
   components/         fit bar, job list, form helpers
   db/                 schema and connection (PGlite locally, Postgres in production)
-  lib/                matching engine, auth, queries, ranking
+  lib/                matching engine, auth, queries, ranking, Google markup, CV auto-fill
+assets/fonts/         Schibsted Grotesk (SIL Open Font License) for share images
 scripts/              migrate and seed
 drizzle/              SQL migrations
 ```
@@ -103,7 +144,9 @@ drizzle/              SQL migrations
 
 - Must-have answers and profile details are self-reported. Interviews and reference checks still matter.
 - Field-of-study matching is keyword based, so "Marketing Management" matches "marketing" but "Brand Strategy" wouldn't unless the employer adds that keyword.
-- No email notifications yet (new applicant, status change). [Resend](https://resend.com) would be a simple addition.
+- No email notifications yet (new applicant, status change), and no way for employers to invite someone to apply by email. [Resend](https://resend.com) would be a simple addition.
+- Google listing has no moderation: once switched on, any employer's open job is offered to Google. A live product would want new employers approved first.
+- CV auto-fill sends the CV to Anthropic's API. A live product should say so in its privacy policy.
 - No password reset or email verification yet.
 - CVs live in the database, which is fine at demo scale. At larger scale they should move to object storage (Supabase Storage, Vercel Blob or S3).
 - POPIA basics are covered (consent before sharing, CV access control, self-service account deletion), but a live product would also need a privacy policy and a data retention period for closed jobs.

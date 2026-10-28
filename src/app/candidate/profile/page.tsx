@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { getCandidate } from "@/lib/queries";
 import { ProfileForm } from "./profile-form";
 import { DeleteAccount } from "@/components/delete-account";
+import { autofillEnabled } from "@/lib/cv-autofill";
 
 export const metadata: Metadata = { title: "Your profile" };
 
@@ -19,7 +20,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         Every job scores itself against this profile, so keep it accurate. Employers only see it when you apply to one of
         their jobs.
       </p>
-      <ProfileForm candidate={candidate} next={next} />
+      <ProfileForm candidate={candidate} next={next} autofill={autofillEnabled()} />
       <DeleteAccount what="your profile, CV and all your applications" />
     </div>
   );

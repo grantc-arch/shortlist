@@ -1,6 +1,7 @@
 import "server-only";
-import { and, count, desc, eq, getTableColumns, ilike, or } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, gte, ilike, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { todayInSA } from "./jobs";
 
 const { jobs, employers, candidates, applications } = schema;
 
@@ -8,8 +9,12 @@ const { jobs, employers, candidates, applications } = schema;
 const { cvData: _cv, ...candidateColumns } = getTableColumns(candidates);
 export type CandidateRow = Omit<typeof candidates.$inferSelect, "cvData">;
 
+/** Jobs taking applications: open, and the closing date (if any) hasn't passed in South Africa. */
+const acceptingApplications = () =>
+  and(eq(jobs.status, "open"), or(isNull(jobs.closesOn), gte(jobs.closesOn, todayInSA())))!;
+
 export async function listOpenJobs({ q, city }: { q?: string; city?: string } = {}) {
-  const filters = [eq(jobs.status, "open")];
+  const filters = [acceptingApplications()];
   if (q) {
     const term = `%${q.replace(/[%_]/g, "")}%`;
     filters.push(or(ilike(jobs.title, term), ilike(jobs.description, term), ilike(employers.companyName, term))!);
@@ -21,6 +26,16 @@ export async function listOpenJobs({ q, city }: { q?: string; city?: string } = 
     .innerJoin(employers, eq(employers.userId, jobs.employerId))
     .where(and(...filters))
     .orderBy(desc(jobs.createdAt));
+}
+
+/** Real (non-demo) jobs taking applications, for the sitemap. */
+export async function listListableJobs() {
+  return db
+    .select({ id: jobs.id, updatedAt: jobs.updatedAt })
+    .from(jobs)
+    .innerJoin(employers, eq(employers.userId, jobs.employerId))
+    .where(and(acceptingApplications(), eq(employers.isDemo, false)))
+    .orderBy(desc(jobs.updatedAt));
 }
 
 export async function getJob(id: string) {

@@ -67,6 +67,8 @@ export const employers = pgTable("employers", {
   city: text("city").notNull(),
   about: text("about").notNull().default(""),
   website: text("website"),
+  // Demo companies from the seed script. Their jobs are labelled on the site and never listed on Google.
+  isDemo: boolean("is_demo").notNull().default(false),
 });
 
 export const candidates = pgTable("candidates", {
@@ -113,6 +115,7 @@ export const jobs = pgTable("jobs", {
   weights: jsonb("weights").$type<Weights>().notNull(),
   status: jobStatusEnum("status").notNull().default("open"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const applications = pgTable(
@@ -135,6 +138,15 @@ export const applications = pgTable(
   },
   (t) => [uniqueIndex("applications_job_candidate_idx").on(t.jobId, t.candidateId)],
 );
+
+// One row per CV auto-fill request, used to cap how often each person can call the AI.
+export const cvAutofillRuns = pgTable("cv_autofill_runs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export type User = typeof users.$inferSelect;
 export type Employer = typeof employers.$inferSelect;

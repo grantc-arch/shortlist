@@ -31,10 +31,12 @@ function createDb(): Db {
   return drizzlePglite(client, { schema }) as unknown as Db;
 }
 
-// Reuse one connection across hot reloads in development.
+// One connection per process. Next.js can load this module more than once (hot reloads in
+// development, separate route bundles in production); a second PGlite instance on the same
+// folder would see stale data, so every copy shares the instance stored on globalThis.
 const globalForDb = globalThis as unknown as { __shortlistDb?: Db };
 export const db: Db = globalForDb.__shortlistDb ?? createDb();
-if (process.env.NODE_ENV !== "production") globalForDb.__shortlistDb = db;
+globalForDb.__shortlistDb = db;
 
 export { schema };
 

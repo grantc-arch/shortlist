@@ -12,6 +12,10 @@ import { JobMeta } from "@/components/job-list";
 import { StatusSelect } from "@/components/status-select";
 import { setJobStatus } from "@/app/actions/employer";
 import type { ApplicationStatus } from "@/db/schema";
+import { ShareJob } from "@/components/share-job";
+import { closedReason } from "@/lib/jobs";
+import { formatDate } from "@/lib/format";
+import { googleJobsEnabled, siteUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Applicants" };
 
@@ -27,7 +31,15 @@ export default async function ApplicantsPage({
   const session = await requireRole("employer", `/employer/jobs/${id}`);
   const row = await getJob(id);
   if (!row || row.job.employerId !== session.userId) notFound();
-  const { job } = row;
+  const { job, employer } = row;
+  const closed = closedReason(job);
+  const googleStatus = employer.isDemo
+    ? "Not listed on Google, because this is a demo account."
+    : !googleJobsEnabled()
+      ? "Not listed on Google. Listing is switched off for this site."
+      : closed
+        ? "Not listed on Google while the job is closed."
+        : "Offered to Google for Jobs. Google usually picks up new jobs within a few days, but doesn't guarantee to show them.";
 
   const all = await rankedApplicants(job);
   const weightTotal = Object.values(job.weights).reduce((x, y) => x + y, 0) || 1;
@@ -77,10 +89,22 @@ export default async function ApplicantsPage({
           {posted ? "Your job is live on the job board. Applicants will appear here, ranked." : "Changes saved. Applicants have been re-ranked."}
         </p>
       )}
-      {job.status === "closed" && (
+      {closed && (
         <p className="mt-4 rounded-md border border-line bg-sunken px-4 py-3 text-ink-2">
-          This job is closed. It's hidden from the job board and isn't taking new applications.
+          {closed === "deadline"
+            ? `Applications closed on ${formatDate(job.closesOn)}. To take more, edit the job and move the closing date.`
+            : "This job is closed. It's hidden from the job board and isn't taking new applications."}
         </p>
+      )}
+
+      {!closed && (
+        <section className="panel mt-6 grid gap-x-8 gap-y-4 p-5 md:grid-cols-[1fr_18rem]">
+          <ShareJob url={`${siteUrl()}/jobs/${job.id}`} title={job.title} company={employer.companyName} />
+          <div>
+            <p className="label">Google for Jobs</p>
+            <p className="text-sm text-ink-2">{googleStatus}</p>
+          </div>
+        </section>
       )}
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-b border-line">

@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { logout } from "./actions/auth";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: { default: "Shortlist", template: "%s | Shortlist" },
   description: "Jobs scored against your profile before you apply, and applicants ranked for employers.",
+  // Proves to Google Search Console that you own the site (see README).
+  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

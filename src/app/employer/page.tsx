@@ -6,6 +6,7 @@ import { rankedApplicants } from "@/lib/ranking";
 import { formatDate } from "@/lib/format";
 import { ScoreNumber } from "@/components/fit-bar";
 import { JobMeta } from "@/components/job-list";
+import { closedReason } from "@/lib/jobs";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -75,7 +76,11 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
                   >
                     {job.title}
                   </Link>
-                  {job.status === "closed" && <span className="ml-2 text-sm font-semibold text-muted">Closed</span>}
+                  {closedReason(job) && (
+                    <span className="ml-2 text-sm font-semibold text-muted">
+                      {closedReason(job) === "deadline" ? "Closing date passed" : "Closed"}
+                    </span>
+                  )}
                   <div className="mt-1">
                     <JobMeta job={job} />
                   </div>

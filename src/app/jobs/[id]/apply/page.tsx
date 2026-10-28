@@ -6,6 +6,7 @@ import { getApplication, getCandidate, getJob } from "@/lib/queries";
 import { scoreMatch } from "@/lib/matching";
 import { candidateForMatching, jobForMatching, profileGaps } from "@/lib/format";
 import { FitBreakdown } from "@/components/fit-bar";
+import { isAcceptingApplications } from "@/lib/jobs";
 import { ApplyForm } from "./apply-form";
 
 export const metadata: Metadata = { title: "Apply" };
@@ -14,7 +15,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   const session = await requireRole("candidate", `/jobs/${id}/apply`);
   const row = await getJob(id);
-  if (!row || row.job.status !== "open") notFound();
+  if (!row || !isAcceptingApplications(row.job)) notFound();
   const { job, employer } = row;
 
   if (await getApplication(job.id, session.userId)) redirect(`/jobs/${job.id}`);

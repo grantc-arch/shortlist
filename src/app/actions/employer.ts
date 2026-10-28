@@ -9,6 +9,7 @@ import { requireRole } from "@/lib/auth";
 import { CITIES } from "@/lib/constants";
 import { normaliseWeights, parseLines, parseList, QUALIFICATION_ORDER } from "@/lib/matching";
 import { isUuid } from "@/lib/queries";
+import { todayInSA } from "@/lib/jobs";
 import type { FormState } from "./auth";
 
 const optionalInt = z.preprocess(
@@ -37,6 +38,9 @@ const jobSchema = z
   })
   .refine((j) => !j.salaryMin || !j.salaryMax || j.salaryMax >= j.salaryMin, {
     message: "The top of the salary range is lower than the bottom",
+  })
+  .refine((j) => !j.closesOn || j.closesOn >= todayInSA(), {
+    message: "Choose a closing date from today onwards. To stop applications now, use “Close to applications”.",
   });
 
 function parseJobForm(form: FormData) {
@@ -80,7 +84,7 @@ export async function saveJob(_: FormState, form: FormData): Promise<FormState> 
     if (!isUuid(jobId)) return { error: "That job doesn't exist." };
     const [updated] = await db
       .update(schema.jobs)
-      .set({ ...parsed.data, weights })
+      .set({ ...parsed.data, weights, updatedAt: new Date() })
       .where(and(eq(schema.jobs.id, jobId), eq(schema.jobs.employerId, session.userId)))
       .returning({ id: schema.jobs.id });
     if (!updated) return { error: "That job doesn't exist or isn't yours." };
@@ -103,7 +107,7 @@ export async function setJobStatus(form: FormData) {
   if (!isUuid(id)) return;
   await db
     .update(schema.jobs)
-    .set({ status })
+    .set({ status, updatedAt: new Date() })
     .where(and(eq(schema.jobs.id, id), eq(schema.jobs.employerId, session.userId)));
   revalidatePath("/", "layout");
 }

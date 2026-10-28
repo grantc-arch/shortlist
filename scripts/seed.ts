@@ -58,7 +58,8 @@ async function createEmployer(email: string, companyName: string, city: string, 
     .insert(schema.users)
     .values({ email, passwordHash: await bcrypt.hash(PASSWORD, 10), role: "employer", createdAt: daysAgo(30) })
     .returning();
-  await db.insert(schema.employers).values({ userId: u.id, companyName, city, about, website });
+  // isDemo keeps these fictional companies' jobs labelled on the site and off Google.
+  await db.insert(schema.employers).values({ userId: u.id, companyName, city, about, website, isDemo: true });
   return u.id;
 }
 
@@ -90,7 +91,7 @@ async function main() {
     return;
   }
   if (RESET) {
-    await db.execute(sql`TRUNCATE applications, jobs, candidates, employers, users CASCADE`);
+    await db.execute(sql`TRUNCATE cv_autofill_runs, applications, jobs, candidates, employers, users CASCADE`);
     console.log("Wiped all data.");
   }
 
