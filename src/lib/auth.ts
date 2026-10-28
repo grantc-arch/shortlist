@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
+import { authSecret } from "./secret";
 
 const COOKIE = "shortlist_session";
 const MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -16,14 +17,7 @@ export interface Session {
   email: string;
 }
 
-function secret() {
-  const s = process.env.AUTH_SECRET;
-  if (!s) {
-    if (process.env.NODE_ENV === "production") throw new Error("AUTH_SECRET must be set in production");
-    return new TextEncoder().encode("dev-only-secret-change-me-dev-only-secret");
-  }
-  return new TextEncoder().encode(s);
-}
+const secret = () => new TextEncoder().encode(authSecret());
 
 export const hashPassword = (password: string) => bcrypt.hash(password, 10);
 export const verifyPassword = (password: string, hash: string) => bcrypt.compare(password, hash);
@@ -63,6 +57,13 @@ export async function getSession(): Promise<Session | null> {
   } catch {
     return null;
   }
+}
+
+/** Use at the top of a page or action that needs any signed-in user. */
+export async function requireUser(next?: string): Promise<Session> {
+  const session = await getSession();
+  if (!session) redirect(`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`);
+  return session;
 }
 
 /** Use at the top of a page or action that needs a signed-in user of a given role. */

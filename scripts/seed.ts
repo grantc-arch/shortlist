@@ -92,7 +92,9 @@ async function main() {
     return;
   }
   if (RESET) {
-    await db.execute(sql`TRUNCATE cv_autofill_runs, applications, jobs, candidates, employers, users CASCADE`);
+    await db.execute(
+      sql`TRUNCATE invitations, job_reports, saved_jobs, password_reset_tokens, cv_autofill_runs, applications, jobs, candidates, employers, users CASCADE`,
+    );
     console.log("Wiped all data.");
   }
 
@@ -164,6 +166,8 @@ async function main() {
         "I'm proficient in Microsoft Office (Word, Excel and Outlook)",
       ],
       weights: adminWeights,
+      benefits: ["medical_aid", "retirement", "thirteenth_cheque", "parking", "training"],
+      views: 142,
       createdAt: daysAgo(6),
     })
     .returning();
@@ -194,6 +198,8 @@ async function main() {
       skills: ["Instagram", "TikTok", "Canva", "Photography", "Copywriting", "Meta Business Suite"],
       mustHaves: ["I'm able to work from the estate at least three days a week", "I have a valid driver's licence"],
       weights: { qualification: 15, experience: 10, skills: 45, location: 20, availability: 10 },
+      benefits: ["flexible_hours", "phone", "training", "meals"],
+      views: 88,
       createdAt: daysAgo(3),
     })
     .returning();
@@ -223,11 +229,13 @@ async function main() {
       skills: ["Customer service", "Appointment booking", "Microsoft Excel", "Medical aid claims", "Telephone etiquette"],
       mustHaves: ["I can work Saturday mornings once a month", "I'm comfortable handling confidential patient information"],
       weights: { qualification: 10, experience: 30, skills: 30, location: 20, availability: 10 },
+      benefits: ["medical_aid", "retirement", "thirteenth_cheque"],
+      views: 61,
       createdAt: daysAgo(9),
     })
     .returning();
 
-  await db.insert(schema.jobs).values({
+  const [intern] = await db.insert(schema.jobs).values({
     employerId: jozi,
     title: "Marketing Intern",
     city: "Johannesburg",
@@ -244,12 +252,16 @@ async function main() {
     skills: ["Microsoft Excel", "PowerPoint", "Canva", "Market research", "Copywriting"],
     mustHaves: ["I have a laptop and reliable internet at home"],
     weights: { qualification: 30, experience: 5, skills: 40, location: 5, availability: 20 },
+    benefits: ["laptop", "flexible_hours"],
+    views: 35,
     createdAt: daysAgo(1),
-  });
+  }).returning();
 
   // ── Candidates ───────────────────────────────────────────────────────────
   // Fictional people with deliberately varied profiles, so the ranking has something to sort.
-  const people: (CandidateSeed & { applyAdmin?: { answers: boolean[]; note: string; status?: "new" | "shortlisted" | "interview" | "declined"; daysAgo: number } })[] = [
+  const people: (CandidateSeed & {
+    applyAdmin?: { answers: boolean[]; note: string; status?: "new" | "shortlisted" | "interview" | "declined"; daysAgo: number; rating?: number };
+  })[] = [
     {
       email: "thandi.n@example.com",
       fullName: "Thandi Nkosi",
@@ -268,6 +280,7 @@ async function main() {
         note: "I've run diaries for two directors at a PR agency and coordinated launches end to end. I'd love to bring that to an agency I can grow with.",
         status: "shortlisted",
         daysAgo: 5,
+        rating: 5,
       },
     },
     {
@@ -306,6 +319,7 @@ async function main() {
         answers: [true, true, true],
         note: "My background is admin rather than marketing, but I'm very organised and want to move into a creative industry.",
         daysAgo: 4,
+        rating: 4,
       },
     },
     {
@@ -339,6 +353,7 @@ async function main() {
       skills: ["Excel", "PowerPoint", "Google Workspace", "Market research", "Canva"],
       summary: "Honours graduate in strategic marketing, relocating to Cape Town.",
       hasOwnTransport: true,
+      openToOffers: true,
       availableFrom: "2026-12-01",
       cvLines: ["BCom Honours Strategic Marketing, 2025", "Research Assistant, 2025 - present"],
       applyAdmin: {
@@ -379,7 +394,55 @@ async function main() {
       summary: "Marketing graduate with front-of-house and social media experience.",
       hasOwnTransport: true,
       availableFrom: "2026-11-01",
+      openToOffers: true,
       cvLines: ["BCom Marketing Management, 2025", "Front of House & Socials, Cape Town cafe, 2025 - present"],
+    },
+    // In the talent pool but haven't applied for anything, so employers can find and invite them.
+    {
+      email: "naledi.k@example.com",
+      fullName: "Naledi Khumalo",
+      phone: "082 555 0108",
+      city: "Cape Town",
+      qualificationLevel: "degree",
+      fieldOfStudy: "Marketing and Communication",
+      yearsExperience: 3,
+      skills: ["Excel", "Word", "Outlook", "Google Workspace", "Canva", "Diary management", "Copywriting"],
+      summary: "Communications officer at a Cape Town NGO, looking for an agency role.",
+      hasOwnTransport: true,
+      availableFrom: "2026-11-01",
+      openToOffers: true,
+      cvLines: ["BA Marketing and Communication, 2023", "Communications Officer, NGO, 2023 - present"],
+    },
+    {
+      email: "jason.p@example.com",
+      fullName: "Jason Pillay",
+      phone: "073 555 0109",
+      city: "Cape Town",
+      qualificationLevel: "diploma",
+      fieldOfStudy: "Office Management and Technology",
+      yearsExperience: 5,
+      skills: ["Excel", "Word", "Outlook", "Minute taking", "Diary management", "Filing", "Pastel"],
+      summary: "Personal assistant to a managing director for five years.",
+      hasOwnTransport: true,
+      availableFrom: "2026-12-01",
+      openToOffers: true,
+      cvLines: ["Diploma in Office Management and Technology, 2020", "Personal Assistant, 2021 - present"],
+    },
+    {
+      email: "zanele.m@example.com",
+      fullName: "Zanele Mthembu",
+      phone: "061 555 0110",
+      city: "Johannesburg",
+      willingToRelocate: true,
+      qualificationLevel: "honours",
+      fieldOfStudy: "Marketing Management",
+      yearsExperience: 2,
+      skills: ["Excel", "PowerPoint", "Canva", "Market research", "Instagram", "Social media scheduling"],
+      summary: "Brand assistant at a Johannesburg FMCG company.",
+      hasOwnTransport: false,
+      availableFrom: "2026-11-15",
+      openToOffers: true,
+      cvLines: ["BCom Honours Marketing Management, 2024", "Brand Assistant, 2024 - present"],
     },
   ];
 
@@ -393,6 +456,9 @@ async function main() {
         mustHaveAnswers: applyAdmin.answers,
         coverNote: applyAdmin.note,
         status: applyAdmin.status ?? "new",
+        // They already know where they stand, so the daily email has nothing to report.
+        notifiedStatus: applyAdmin.status ?? "new",
+        rating: applyAdmin.rating ?? null,
         createdAt: daysAgo(applyAdmin.daysAgo),
         updatedAt: daysAgo(applyAdmin.daysAgo),
       });
@@ -404,7 +470,16 @@ async function main() {
         mustHaveAnswers: [true, true],
         coverNote: "I've worked front of house for a year and enjoy being the first person people meet.",
         status: "interview",
+        notifiedStatus: "interview",
         createdAt: daysAgo(7),
+      });
+      // A saved job, and an invitation from the Johannesburg studio, for the demo candidate's dashboard.
+      await db.insert(schema.savedJobs).values({ userId: id, jobId: social.id, createdAt: daysAgo(1) });
+      await db.insert(schema.invitations).values({
+        jobId: intern.id,
+        candidateId: id,
+        message: "Your mix of marketing and social media work stood out. The internship is fully remote, so Cape Town is no problem.",
+        createdAt: daysAgo(1),
       });
     }
     // A couple of applicants for the social media role too, so it's not empty.
@@ -426,7 +501,7 @@ async function main() {
     }
   }
 
-  console.log(`Seeded 4 employers, 4 jobs and ${people.length} candidates.`);
+  console.log(`Seeded 4 employers, 4 jobs and ${people.length} candidates (${people.filter((p) => p.openToOffers).length} in the talent pool).`);
   console.log(`Demo logins (password "${PASSWORD}"): employer@example.com, candidate@example.com`);
 }
 

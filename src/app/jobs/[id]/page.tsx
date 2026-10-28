@@ -2,15 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getApplication, getCandidate, getJob } from "@/lib/queries";
+import { getApplication, getCandidate, getInvitation, getJob, getReport, listOpenJobs, savedJobIds } from "@/lib/queries";
 import { scoreMatch } from "@/lib/matching";
 import { candidateForMatching, formatDate, jobForMatching, profileGaps } from "@/lib/format";
-import { qualificationLabel, STATUS_LABELS } from "@/lib/constants";
+import { benefitLabels, qualificationLabel, STATUS_LABELS } from "@/lib/constants";
 import { FitBar, FitBreakdown, ScoreNumber } from "@/components/fit-bar";
-import { JobMeta } from "@/components/job-list";
+import { ClosingSoon, JobList, JobMeta } from "@/components/job-list";
+import { SaveJobButton } from "@/components/save-job";
+import { ViewTracker } from "@/components/view-tracker";
+import { similarJobs } from "@/lib/similar";
 import { closedReason } from "@/lib/jobs";
 import { buildJobPosting, isListableOnGoogle, jsonLdScript } from "@/lib/job-posting";
-import { googleJobsEnabled, siteUrl } from "@/lib/site";
+import { googleJobsEnabled, isAdmin, siteUrl } from "@/lib/site";
 import { formatSalary } from "@/lib/format";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -41,7 +44,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
   const session = await getSession();
   const isOwner = session?.role === "employer" && session.userId === job.employerId;
   const closed = closedReason(job);
-  if (closed && !isOwner) {
+  if (closed && !isOwner && !isAdmin(session?.email)) {
     // Closed jobs stay visible to people who applied, so their application history makes sense.
     const applied = session?.role === "candidate" && (await getApplication(job.id, session.userId));
     if (!applied) notFound();
@@ -49,6 +52,14 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
 
   const candidate = session?.role === "candidate" ? await getCandidate(session.userId) : null;
   const application = candidate ? await getApplication(job.id, candidate.userId) : null;
+  const invitation = candidate && !application && !closed ? await getInvitation(job.id, candidate.userId) : null;
+  const saved = candidate ? (await savedJobIds(candidate.userId)).has(job.id) : false;
+  const reported = session ? !!(await getReport(job.id, session.userId)) : false;
+  const benefits = benefitLabels(job.benefits);
+  const similar = similarJobs(job, await listOpenJobs()).map((r) => ({
+    ...r,
+    match: candidate ? scoreMatch(jobForMatching(r.job), candidateForMatching(candidate)) : null,
+  }));
   const match = candidate
     ? scoreMatch(jobForMatching(job), candidateForMatching(candidate), application?.mustHaveAnswers ?? null)
     : null;
@@ -60,7 +71,21 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
       {jobPosting && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jobPosting }} />}
+      {!isOwner && !closed && <ViewTracker jobId={job.id} />}
       <article className="min-w-0">
+        {closed === "hidden" && (
+          <p className="mb-5 rounded-md border border-bad/30 bg-bad/10 px-4 py-3 text-sm text-ink">
+            {isOwner
+              ? "This job is hidden from the job board because several people reported it. It's waiting for a review, and nobody can apply in the meantime."
+              : "This job was reported by several people and is hidden while it's reviewed. Be careful: don't pay anything or share your bank details or ID number with this employer."}
+          </p>
+        )}
+        {invitation && (
+          <div className="mb-5 rounded-md border border-good/30 bg-good/10 px-4 py-3 text-sm text-ink">
+            <p className="font-semibold">{employer.companyName} invited you to apply for this job.</p>
+            {invitation.message && <p className="mt-1 whitespace-pre-line text-ink-2">“{invitation.message}”</p>}
+          </div>
+        )}
         {employer.isDemo && (
           <p className="mb-5 rounded-md border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-ink">
             This is a demo listing for a fictional company, there to show how Shortlist works. It isn't a real job.
@@ -71,7 +96,9 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
         </Link>
         <h1 className="mt-2 text-4xl font-bold sm:text-5xl">{job.title}</h1>
         <p className="mt-2 text-lg text-ink-2">
-          {employer.companyName}
+          <Link href={`/companies/${employer.userId}`} className="link">
+            {employer.companyName}
+          </Link>
           {closed && <span className="ml-2 text-bad">Closed to new applications</span>}
         </p>
         <div className="mt-4">
@@ -80,6 +107,12 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
         {job.closesOn && (
           <p className="mt-1 text-sm text-muted">
             {closed === "deadline" ? "Applications closed" : "Applications close"} {formatDate(job.closesOn)}
+            {!closed && (
+              <>
+                {" "}
+                <ClosingSoon closesOn={job.closesOn} />
+              </>
+            )}
           </p>
         )}
 
@@ -156,10 +189,35 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
           </section>
         )}
 
-        {employer.about && (
+        {benefits.length > 0 && (
           <section className="mt-8 max-w-prose">
-            <h2 className="text-xl font-semibold">About {employer.companyName}</h2>
-            <p className="mt-2 text-ink-2">{employer.about}</p>
+            <h2 className="text-xl font-semibold">Benefits</h2>
+            <ul className="mt-3 flex flex-wrap gap-1.5">
+              {benefits.map((b) => (
+                <li key={b} className="rounded bg-sunken px-2 py-0.5 text-sm text-ink-2">
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="mt-8 max-w-prose">
+          <h2 className="text-xl font-semibold">About {employer.companyName}</h2>
+          {employer.about && <p className="mt-2 text-ink-2">{employer.about}</p>}
+          <p className="mt-2">
+            <Link href={`/companies/${employer.userId}`} className="link text-sm">
+              See the company and all its jobs
+            </Link>
+          </p>
+        </section>
+
+        {similar.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-xl font-semibold">Similar jobs</h2>
+            <div className="mt-3">
+              <JobList items={similar} />
+            </div>
           </section>
         )}
       </article>
@@ -201,6 +259,11 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
                     Apply for this job
                   </Link>
                 )}
+                {!application && !closed && (
+                  <div className="mt-2">
+                    <SaveJobButton jobId={job.id} saved={saved} signedInAsCandidate />
+                  </div>
+                )}
               </div>
             </>
           ) : session?.role === "employer" ? (
@@ -221,6 +284,24 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
             </>
           )}
         </div>
+        {!isOwner && (
+          <div className="mt-4 px-1 text-sm text-ink-2">
+            <h2 className="font-semibold text-ink">Stay safe</h2>
+            <p className="mt-1">
+              Shortlist never charges to apply. Don't pay for a job, training or a “placement fee”, and don't share your
+              bank details or ID number before you've signed an offer.
+            </p>
+            <p className="mt-2">
+              {reported ? (
+                <span className="text-muted">You've reported this job. Thanks for letting us know.</span>
+              ) : (
+                <Link href={`/jobs/${job.id}/report`} className="link">
+                  Report this job
+                </Link>
+              )}
+            </p>
+          </div>
+        )}
       </aside>
     </div>
   );

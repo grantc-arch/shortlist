@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { applicationsForCandidate, getCandidate, listOpenJobs } from "@/lib/queries";
+import { applicationsForCandidate, getCandidate, invitationsForCandidate, listOpenJobs, savedJobsFor } from "@/lib/queries";
 import { scoreMatch } from "@/lib/matching";
 import { candidateForMatching, formatDate, jobForMatching, profileGaps } from "@/lib/format";
 import { STATUS_LABELS } from "@/lib/constants";
 import { FitBar, ScoreNumber } from "@/components/fit-bar";
-import { JobList } from "@/components/job-list";
+import { ClosingSoon, JobList } from "@/components/job-list";
+import { SaveJobButton } from "@/components/save-job";
+import { closedReason } from "@/lib/jobs";
 import { withdrawApplication } from "@/app/actions/candidate";
 
 export const metadata: Metadata = { title: "My applications" };
@@ -28,6 +30,9 @@ export default async function CandidateHome({ searchParams }: { searchParams: Pr
 
   const apps = await applicationsForCandidate(session.userId);
   const appliedIds = new Set(apps.map((a) => a.job.id));
+  const savedList = await savedJobsFor(session.userId);
+  const savedIds = new Set(savedList.map((s) => s.job.id));
+  const invitations = await invitationsForCandidate(session.userId);
   const recommended = (await listOpenJobs())
     .filter((r) => !appliedIds.has(r.job.id))
     .map((r) => ({ ...r, match: scoreMatch(jobForMatching(r.job), me) }))
@@ -64,6 +69,41 @@ export default async function CandidateHome({ searchParams }: { searchParams: Pr
           </div>
         )}
       </div>
+
+      {invitations.length > 0 && (
+        <section>
+          <h2 className="text-xl font-semibold">Invited to apply</h2>
+          <p className="mt-1 text-sm text-ink-2">
+            These employers found your anonymous profile and asked you to apply. They can't see who you are unless you do.
+          </p>
+          <ul className="list mt-3 divide-y divide-line">
+            {invitations.map(({ invitation, job, companyName }) => {
+              const match = scoreMatch(jobForMatching(job), me);
+              return (
+                <li key={invitation.id} className="relative grid gap-4 p-5 sm:grid-cols-[1fr_9rem] sm:items-center">
+                  <div className="min-w-0">
+                    <Link href={`/jobs/${job.id}`} className="text-lg font-semibold after:absolute after:inset-0 hover:underline">
+                      {job.title}
+                    </Link>
+                    <p className="text-ink-2">
+                      {companyName}
+                      <span className="text-muted"> invited you {formatDate(invitation.createdAt)}</span>
+                    </p>
+                    {invitation.message && <p className="mt-1 whitespace-pre-line text-sm text-ink-2">“{invitation.message}”</p>}
+                  </div>
+                  <div>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-sm text-muted">Match</span>
+                      <ScoreNumber total={match.total} className="text-xl" />
+                    </div>
+                    <FitBar criteria={match.criteria} size="sm" />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section>
         <h2 className="text-xl font-semibold">My applications</h2>
@@ -117,13 +157,87 @@ export default async function CandidateHome({ searchParams }: { searchParams: Pr
         )}
       </section>
 
+      <section>
+        <h2 className="text-xl font-semibold">Saved jobs</h2>
+        {savedList.length === 0 ? (
+          <p className="mt-1 text-sm text-ink-2">Press Save on any job to keep it here until you're ready to apply.</p>
+        ) : (
+          <ul className="list mt-3 divide-y divide-line">
+            {savedList.map(({ job, companyName, savedAt }) => {
+              const closed = closedReason(job);
+              const match = scoreMatch(jobForMatching(job), me);
+              return (
+                <li key={job.id} className="relative grid gap-4 p-5 sm:grid-cols-[1fr_9rem_auto] sm:items-center">
+                  <div className="min-w-0">
+                    <Link href={`/jobs/${job.id}`} className="text-lg font-semibold hover:underline">
+                      {job.title}
+                    </Link>
+                    <p className="text-ink-2">
+                      {companyName}
+                      <span className="text-muted"> saved {formatDate(savedAt)}</span>
+                    </p>
+                    <p className="mt-1 text-sm">
+                      {closed ? <span className="text-muted">No longer taking applications</span> : <ClosingSoon closesOn={job.closesOn} />}
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-sm text-muted">Match</span>
+                      <ScoreNumber total={match.total} className="text-xl" />
+                    </div>
+                    <FitBar criteria={match.criteria} size="sm" />
+                  </div>
+                  <div className="flex items-center gap-2 sm:justify-end">
+                    {!closed && gaps.length === 0 && (
+                      <Link href={`/jobs/${job.id}/apply`} className="btn btn-primary py-1.5">
+                        Apply
+                      </Link>
+                    )}
+                    <SaveJobButton jobId={job.id} saved signedInAsCandidate compact />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
       {recommended.length > 0 && (
         <section>
           <h2 className="text-xl font-semibold">Your best matches</h2>
           <p className="mt-1 text-sm text-ink-2">Open jobs you haven't applied for, ranked against your profile.</p>
           <div className="mt-3">
-            <JobList items={recommended} />
+            <JobList items={recommended} savedIds={savedIds} signedInAsCandidate />
           </div>
+        </section>
+      )}
+
+      {(!candidate.openToOffers || candidate.alertFrequency === "off") && (
+        <section className="grid gap-4 md:grid-cols-2">
+          {candidate.alertFrequency === "off" && (
+            <div className="box p-5">
+              <h2 className="font-semibold">Get new matches by email</h2>
+              <p className="mt-1 text-sm text-ink-2">
+                A daily or weekly email with new jobs that score well against your profile. Nothing is sent when there's
+                nothing new.
+              </p>
+              <Link href="/settings#alerts" className="btn mt-3">
+                Set up job alerts
+              </Link>
+            </div>
+          )}
+          {!candidate.openToOffers && (
+            <div className="box p-5">
+              <h2 className="font-semibold">Let employers find you</h2>
+              <p className="mt-1 text-sm text-ink-2">
+                Join the talent pool and employers can invite you to apply. They see your qualification, experience and
+                skills, never your name, contact details or CV.
+              </p>
+              <Link href="/settings#talent-pool" className="btn mt-3">
+                Join the talent pool
+              </Link>
+            </div>
+          )}
         </section>
       )}
     </div>

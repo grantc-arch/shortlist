@@ -29,6 +29,13 @@
       "when": 1793207789169,
       "tag": "0003_place_coordinates",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793209270073,
+      "tag": "0004_features_round_2",
+      "breakpoints": true
     }
   ]
 }

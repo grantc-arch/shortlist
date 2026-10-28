@@ -3,7 +3,7 @@
  * Spec: https://developers.google.com/search/docs/appearance/structured-data/job-posting
  */
 import type { Employer, Job } from "@/db/schema";
-import { qualificationLabel } from "./constants";
+import { benefitLabels, qualificationLabel } from "./constants";
 import { isAcceptingApplications } from "./jobs";
 
 const PROVINCES: Record<string, string> = {
@@ -74,6 +74,8 @@ export function descriptionHtml(job: Job): string {
   ];
   parts.push("<p><strong>What they're looking for</strong></p>", list(requirements));
   if (job.mustHaves.length > 0) parts.push("<p><strong>Must-haves</strong></p>", list(job.mustHaves));
+  const benefits = benefitLabels(job.benefits);
+  if (benefits.length > 0) parts.push("<p><strong>Benefits</strong></p>", list(benefits));
   return parts.join("");
 }
 
@@ -113,6 +115,7 @@ export function buildJobPosting(job: Job, employer: JobEmployer, baseUrl: string
       : undefined;
 
   const credential = CREDENTIALS[job.minQualification];
+  const benefits = benefitLabels(job.benefits);
 
   return {
     "@context": "https://schema.org/",
@@ -154,6 +157,7 @@ export function buildJobPosting(job: Job, employer: JobEmployer, baseUrl: string
         ? { "@type": "OccupationalExperienceRequirements", monthsOfExperience: job.minYearsExperience * 12 }
         : "no requirements",
     ...(job.skills.length ? { skills: job.skills.join(", ") } : {}),
+    ...(benefits.length ? { jobBenefits: benefits.join(", ") } : {}),
     url,
   };
 }

@@ -38,6 +38,9 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
             {employer.city}.{" "}
             <Link href="/employer/profile" className="link">
               Edit company details
+            </Link>{" "}
+            <Link href={`/companies/${employer.userId}`} className="link">
+              View your company page
             </Link>
           </p>
         </div>
@@ -82,8 +85,8 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
                     {job.title}
                   </Link>
                   {closedReason(job) && (
-                    <span className="ml-2 text-sm font-semibold text-muted">
-                      {closedReason(job) === "deadline" ? "Closing date passed" : "Closed"}
+                    <span className={`ml-2 text-sm font-semibold ${closedReason(job) === "hidden" ? "text-bad" : "text-muted"}`}>
+                      {{ deadline: "Closing date passed", closed: "Closed", hidden: "Hidden: reported, waiting for review" }[closedReason(job)!]}
                     </span>
                   )}
                   <div className="mt-1">
@@ -92,6 +95,7 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
                   <p className="mt-1 text-sm text-muted">Posted {formatDate(job.createdAt)}</p>
                 </div>
                 <div className="flex gap-8">
+                  <Stat value={job.views} label={job.views === 1 ? "view" : "views"} />
                   <Stat value={applicants} label={applicants === 1 ? "applicant" : "applicants"} />
                   <Stat value={newCount} label="to review" accent={newCount > 0} />
                 </div>

@@ -19,3 +19,13 @@ export function siteUrl(): string {
 export function googleJobsEnabled(): boolean {
   return process.env.LIST_JOBS_ON_GOOGLE === "true";
 }
+
+/** Accounts allowed to review reported jobs, from ADMIN_EMAILS (comma-separated). */
+export function adminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export const isAdmin = (email: string | null | undefined) => !!email && adminEmails().includes(email.toLowerCase());

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { logout } from "./actions/auth";
-import { siteUrl } from "@/lib/site";
+import { isAdmin, siteUrl } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -48,6 +48,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </Link>
                 </>
               )}
+              {session && (
+                <Link href="/settings" className="hover:text-ink">
+                  Settings
+                </Link>
+              )}
+              {isAdmin(session?.email) && (
+                <Link href="/admin" className="hover:text-ink">
+                  Reports
+                </Link>
+              )}
             </nav>
             <div className="ml-auto flex items-center gap-3 text-sm sm:ml-0">
               {session ? (
@@ -72,7 +82,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
         <footer className="mx-auto max-w-6xl px-4 pb-10 text-sm text-muted sm:px-6">
-          Built by Grant Cox. Applicant details are only shared with the employer you apply to.
+          Built by Grant Cox. Applicant details are only shared with the employers you apply to. Shortlist never charges
+          candidates to apply.
         </footer>
       </body>
     </html>

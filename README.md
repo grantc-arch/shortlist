@@ -6,6 +6,9 @@ A two-sided job board that scores every candidate against every job, and shows b
 - **Employers** post a role, list must-haves, and decide how much each criterion counts. Applicants arrive ranked, with the reasons beside every score. The employer makes every decision; nobody is auto-rejected.
 - **Finding candidates:** open jobs can be listed on Google for Jobs, and every job link shows a preview card when shared on LinkedIn or WhatsApp.
 - **Fast sign-up:** candidates can upload their CV and have Claude fill in their profile for them to check.
+- **Job seeker tools:** saved jobs, search filters, similar jobs, company pages, job alerts by email, and a talent pool employers can invite people from.
+- **Hiring tools:** a drag-and-drop applicant board, private star ratings, listing stats, CSV export, and a daily email of new applicants.
+- **Safety:** scam warnings on every job, and a report button. Jobs reported by three people are hidden until an admin reviews them.
 
 ![Ranked applicants](docs/applicants.png)
 
@@ -90,6 +93,50 @@ Location fields (employer sign-up, company details, candidate profile, job form)
 
 Gmail allows about 500 emails a day and sends from your own address. Once the site has its own domain, a provider such as [Resend](https://resend.com) or Brevo is better: use its SMTP settings and set `EMAIL_FROM`, for example `Shortlist <no-reply@yourdomain.co.za>`.
 
+## Job seeker and hiring tools
+
+These were picked by looking at what LinkedIn, Indeed, PNet, Welcome to the Jungle (Otta), Workable and Greenhouse offer, and keeping what fits a small South African job board.
+
+**For candidates**
+
+| Feature | What it does |
+| --- | --- |
+| Saved jobs | A Save button on every job. Saved jobs are listed on the dashboard with their match and closing date. Applying removes a job from the list. |
+| Filters and sorting | Workplace, job type, minimum salary and date posted, sorted by best match, newest, highest salary or closing soonest. Jobs closing within a week say so. |
+| Similar jobs | Each job page suggests up to three open jobs sharing skills, title words or field ([`src/lib/similar.ts`](src/lib/similar.ts)). |
+| Company pages | `/companies/<id>` shows the company's details and every job it has open. |
+| Benefits | Employers tick benefits (medical aid, provident fund, 13th cheque…). They show on the job and in the Google markup. |
+| Job alerts | A daily or weekly email of new jobs scoring at least the match the candidate chooses. Nothing is sent when there's nothing new. |
+| Application updates | One email a day listing any status changes (shortlisted, interview, hired, not progressing). A status changed by mistake and changed back that day is never emailed. |
+| Talent pool | Candidates can tick "open to opportunities". Employers then see an anonymous version of their profile (qualification, experience, skills, city, availability, but no name, contact details or CV) scored against each job, and can invite them to apply. Invitations are emailed straight away, up to 25 a day per employer. |
+
+**For employers**
+
+| Feature | What it does |
+| --- | --- |
+| Pipeline board | Applicants in one column per stage. Drag a card, or use its menu, which also works by keyboard and on phones. |
+| Ratings | A private 1 to 5 star rating on each applicant, shown in the list and on the board, with a sort by rating. |
+| Listing stats | Views, applications, the share of viewers who applied, average match and how many meet every must-have. A view is counted once per browser tab; the employer's own visits and search engine crawlers don't count. |
+| CSV export | Every applicant in ranked order with contact details, scores, must-have answers, status, rating and notes. Text that could run as a spreadsheet formula is neutralised. |
+| New applicant email | One email a day per employer, with new applicants per job and the best match. |
+
+**Trust and safety**
+
+- Every job page says Shortlist never charges to apply and warns against sharing bank details or ID numbers, the usual signs of South African job scams.
+- Signed-in users can report a job, once each. Each report emails the site admins. A job reported by three different people is hidden from the board, can't be applied for, and its employer is told it's under review.
+- Admins (the accounts listed in `ADMIN_EMAILS`) review reports at `/admin`: restore the job, or remove it for good. Removed jobs can be restored later.
+
+### Daily emails
+
+The once-a-day emails (application updates, new applicants, job alerts) are sent by `/api/cron/daily`, which [Vercel Cron](https://vercel.com/docs/cron-jobs) calls every morning, as set in [`vercel.json`](vercel.json). On the free Hobby plan it runs some time between 08:00 and 09:00 South African time.
+
+- It only runs when `CRON_SECRET` is set. Vercel sends that value with each call, so nobody else can trigger it.
+- Each email is claimed in the database before it's sent, so a repeated or overlapping run never sends anything twice.
+- It sends at most 300 emails a run, to stay inside Gmail's daily limit.
+- Every email has a one-click unsubscribe link, and people can change everything at `/settings`.
+- Demo accounts use `example.com` addresses, which can't receive mail, so nothing is sent to them.
+- Locally, with no `CRON_SECRET`, visit `http://localhost:3000/api/cron/daily` in `npm run dev` to run it by hand. The emails are printed in the terminal if SMTP isn't set up.
+
 ## Tech stack
 
 - [Next.js](https://nextjs.org) (App Router, server components and server actions), TypeScript, Tailwind CSS
@@ -98,8 +145,8 @@ Gmail allows about 500 emails a day and sends from your own address. Once the si
 - Email and password login with bcrypt-hashed passwords and a signed, HTTP-only session cookie (`jose`)
 - CVs stored in the database (PDF only, 2 MB cap), downloadable only by the candidate and employers they applied to
 - [Claude API](https://platform.claude.com/docs) (`@anthropic-ai/sdk`) for CV auto-fill
-- Nodemailer for password reset emails, Photon (OpenStreetMap) for place suggestions
-- Vitest for the matching engine, distances, Google markup and CV auto-fill rules
+- Nodemailer for email, Vercel Cron for the daily emails, Photon (OpenStreetMap) for place suggestions
+- Vitest for the matching engine, distances, Google markup, CV auto-fill rules, similar jobs, CSV export, unsubscribe links and email wording
 
 ## Run it locally
 
@@ -145,30 +192,36 @@ npm run db:reset            # delete the local database entirely and set it up a
      `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
 5. Deploy. Every push to `main` redeploys.
 6. **Optional: CV auto-fill.** Add `ANTHROPIC_API_KEY` in Vercel and redeploy.
-7. **Optional: password reset emails.** Add the four `SMTP_` variables (see [Forgot password](#forgot-password)) and redeploy.
+7. **Optional: email.** Add the four `SMTP_` variables (see [Forgot password](#forgot-password)) for password resets and invitations. For the daily emails, also add `CRON_SECRET` (any long random string, generated the same way as `AUTH_SECRET`). Redeploy.
+   To review reported jobs, add `ADMIN_EMAILS` with your own email address (comma-separated for more than one), sign up on the site with that address, and a **Reports** link appears in the menu.
 8. **Optional: Google for Jobs**, once real employers are posting:
    1. Add `LIST_JOBS_ON_GOOGLE` = `true` in Vercel and redeploy.
    2. In [Google Search Console](https://search.google.com/search-console), add a **URL prefix** property for your site address and choose the **HTML tag** method. Copy the `content` value into a `GOOGLE_SITE_VERIFICATION` variable, redeploy, then press Verify.
    3. Under **Sitemaps**, submit `sitemap.xml`.
    4. Check a job page with Google's [Rich Results Test](https://search.google.com/test/rich-results). Google usually takes a few days to start showing jobs.
 
-When you change `src/db/schema.ts`, run `npm run db:generate` to create a migration, then `npm run db:migrate` locally and against production. If you set up your database before CV auto-fill and Google listing were added, run `DATABASE_URL="postgres://..." npm run db:migrate` once to add the new columns.
+When you change `src/db/schema.ts`, run `npm run db:generate` to create a migration, then `npm run db:migrate` locally and against production. Whenever you pull changes that add a file to `drizzle/`, run `DATABASE_URL="postgres://..." npm run db:migrate` once against your hosted database before (or straight after) the new code deploys, otherwise the live site will error.
 
 ## Project layout
 
 ```
 src/
   app/
-    actions/          server actions: auth, candidate, employer
-    jobs/             job board, job page (with Google markup and share image), apply flow
+    actions/          server actions: auth, candidate, employer, settings, reports, admin
+    jobs/             job board, job page (with Google markup and share image), apply and report flows
+    companies/        public company pages
     candidate/        candidate dashboard and profile (with CV auto-fill)
-    employer/         employer dashboard, post/edit job, ranked applicants
+    employer/         employer dashboard, post/edit job, ranked applicants, board, talent pool, CSV export
+    settings/         email and talent pool settings
+    admin/            reported job review
+    api/              place search, view counting, daily emails, one-click unsubscribe
     cv/[candidateId]/ access-controlled CV download
-    sitemap.ts        open jobs for search engines
+    sitemap.ts        open jobs and companies for search engines
     robots.ts         keeps dashboards and CVs out of search
-  components/         fit bar, job list, form helpers
+  components/         fit bar, job list, pipeline board, ratings, form helpers
   db/                 schema and connection (PGlite locally, Postgres in production)
-  lib/                matching engine, auth, queries, ranking, Google markup, CV auto-fill
+  lib/                matching engine, auth, queries, ranking, Google markup, CV auto-fill,
+                      similar jobs, emails and the daily email job
 assets/fonts/         Schibsted Grotesk (SIL Open Font License) for share images
 scripts/              migrate and seed
 drizzle/              SQL migrations
@@ -178,7 +231,8 @@ drizzle/              SQL migrations
 
 - Must-have answers and profile details are self-reported. Interviews and reference checks still matter.
 - Field-of-study matching is keyword based, so "Marketing Management" matches "marketing" but "Brand Strategy" wouldn't unless the employer adds that keyword.
-- No email notifications yet (new applicant, status change), and no way for employers to invite someone to apply by email. [Resend](https://resend.com) would be a simple addition.
+- Daily emails depend on Vercel Cron, which the free plan runs once a day. Instant emails would need a paid plan or a queue.
+- Reports need three different accounts to hide a job, and accounts are free, so a determined person could hide a real job until an admin restores it.
 - Google listing has no moderation: once switched on, any employer's open job is offered to Google. A live product would want new employers approved first.
 - CV auto-fill sends the CV to Anthropic's API. A live product should say so in its privacy policy.
 - Email addresses aren't verified at sign-up.

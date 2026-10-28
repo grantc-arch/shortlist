@@ -1,5 +1,6 @@
 import "server-only";
 import nodemailer from "nodemailer";
+import { isUndeliverable } from "./email-address";
 
 /**
  * Sends email through any SMTP server: Gmail with an app password, or a provider
@@ -24,13 +25,20 @@ export interface Email {
   subject: string;
   text: string;
   html: string;
+  /** One-click unsubscribe address (RFC 8058), shown by Gmail and others as an "Unsubscribe" button. */
+  unsubscribeUrl?: string;
 }
 
-export async function sendEmail(email: Email): Promise<void> {
+/** "printed" means SMTP isn't set up, so the email was written to the server log instead. */
+export async function sendEmail(email: Email): Promise<"sent" | "printed" | "skipped"> {
+  if (isUndeliverable(email.to)) {
+    console.log(`Email to ${email.to} skipped (demo address): ${email.subject}`);
+    return "skipped";
+  }
   if (!emailConfigured()) {
     // Without email set up, print the message so links can still be tested locally.
     console.log(`\n--- Email not sent (SMTP isn't set up) ---\nTo: ${email.to}\nSubject: ${email.subject}\n\n${email.text}\n---\n`);
-    return;
+    return "printed";
   }
   const port = Number(process.env.SMTP_PORT || 465);
   const transport = nodemailer.createTransport({
@@ -39,8 +47,13 @@ export async function sendEmail(email: Email): Promise<void> {
     secure: port === 465,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
+  const { unsubscribeUrl, ...message } = email;
   await transport.sendMail({
     from: fromAddress()!,
-    ...email,
+    ...message,
+    ...(unsubscribeUrl
+      ? { headers: { "List-Unsubscribe": `<${unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } }
+      : {}),
   });
+  return "sent";
 }

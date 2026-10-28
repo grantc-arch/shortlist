@@ -8,6 +8,7 @@ import { qualificationLabel } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { FitBreakdown } from "@/components/fit-bar";
 import { StatusSelect } from "@/components/status-select";
+import { StarRating } from "@/components/star-rating";
 import { NotesForm } from "./notes-form";
 
 export const metadata: Metadata = { title: "Applicant" };
@@ -74,6 +75,10 @@ export default async function ApplicantPage({ params }: { params: Promise<{ id: 
                   Open CV
                 </a>
               )}
+            </div>
+            <div className="mt-3">
+              <StarRating applicationId={a.id} rating={a.rating} />
+              <p className="mt-0.5 text-xs text-muted">Only you can see your rating and notes.</p>
             </div>
           </header>
 

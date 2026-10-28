@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Job } from "@/db/schema";
 import { DEFAULT_WEIGHTS } from "./matching";
 import { buildJobPosting, descriptionHtml, isListableOnGoogle, jsonLdScript } from "./job-posting";
-import { closedReason, isAcceptingApplications, todayInSA } from "./jobs";
+import { closedReason, daysUntilClose, isAcceptingApplications, todayInSA } from "./jobs";
 
 const job: Job = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -24,8 +24,11 @@ const job: Job = {
   minYearsExperience: 1,
   skills: ["Excel", "Outlook"],
   mustHaves: ["Reliable transport"],
+  benefits: [],
   weights: DEFAULT_WEIGHTS,
   status: "open",
+  views: 0,
+  hiddenAt: null,
   createdAt: new Date("2026-10-20T08:00:00Z"),
   updatedAt: new Date("2026-10-20T08:00:00Z"),
 };
@@ -50,6 +53,19 @@ describe("closing dates", () => {
 
   it("never closes a job without a closing date", () => {
     expect(isAcceptingApplications({ ...job, closesOn: null }, "2030-01-01")).toBe(true);
+  });
+
+  it("stops a reported, hidden job taking applications", () => {
+    const hidden = { ...job, hiddenAt: new Date("2026-11-02T10:00:00Z") };
+    expect(isAcceptingApplications(hidden, "2026-11-01")).toBe(false);
+    expect(closedReason(hidden, "2026-11-01")).toBe("hidden");
+    expect(isListableOnGoogle(hidden, employer, true, "2026-11-01")).toBe(false);
+  });
+
+  it("counts the days left to apply", () => {
+    expect(daysUntilClose("2026-11-15", "2026-11-12")).toBe(3);
+    expect(daysUntilClose("2026-11-15", "2026-11-15")).toBe(0);
+    expect(daysUntilClose(null, "2026-11-15")).toBeNull();
   });
 });
 
@@ -103,6 +119,13 @@ describe("Google listing", () => {
     const p = buildJobPosting({ ...job, workplace: "hybrid" }, employer, "https://x");
     expect(p.jobLocationType).toBeUndefined();
     expect(p.jobLocation).toBeDefined();
+  });
+
+  it("lists benefits by name, in the description and as jobBenefits", () => {
+    const p = buildJobPosting({ ...job, benefits: ["medical_aid", "thirteenth_cheque", "made_up"] }, employer, "https://x");
+    expect(p.jobBenefits).toBe("Medical aid, 13th cheque");
+    expect(p.description).toContain("<li>Medical aid</li><li>13th cheque</li>");
+    expect(buildJobPosting(job, employer, "https://x").jobBenefits).toBeUndefined();
   });
 
   it("escapes HTML in employer text", () => {

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { listListableJobs } from "@/lib/queries";
+import { listListableCompanies, listListableJobs } from "@/lib/queries";
 import { googleJobsEnabled, siteUrl } from "@/lib/site";
 
 // Jobs open and close all the time, so build the sitemap on each request.
@@ -13,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
   if (!googleJobsEnabled()) return pages;
 
-  const jobs = await listListableJobs();
+  const [jobs, companies] = await Promise.all([listListableJobs(), listListableCompanies()]);
   return [
     ...pages,
     ...jobs.map((j) => ({
@@ -22,5 +22,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily" as const,
       priority: 0.8,
     })),
+    ...companies.map((c) => ({ url: `${base}/companies/${c.id}`, changeFrequency: "weekly" as const, priority: 0.5 })),
   ];
 }

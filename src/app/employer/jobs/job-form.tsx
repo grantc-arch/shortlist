@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { saveJob } from "@/app/actions/employer";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
-import { EMPLOYMENT_LABELS, QUALIFICATIONS, WORKPLACE_LABELS } from "@/lib/constants";
+import { BENEFITS, EMPLOYMENT_LABELS, QUALIFICATIONS, WORKPLACE_LABELS } from "@/lib/constants";
 import { PlaceField } from "@/components/place-input";
 import type { Place } from "@/lib/places";
 import { CRITERIA, DEFAULT_WEIGHTS, type Weights } from "@/lib/matching";
@@ -74,6 +74,24 @@ export function JobForm({ job, defaultPlace }: { job?: Job; defaultPlace: Place 
         <Field label="Responsibilities" id="responsibilities" hint="One per line.">
           <textarea className="input min-h-32" id="responsibilities" name="responsibilities" defaultValue={job?.responsibilities.join("\n")} />
         </Field>
+        <fieldset>
+          <legend className="label">Benefits</legend>
+          <p className="hint mt-0 mb-2">Tick what the job offers. Benefits are shown on the listing and help it stand out.</p>
+          <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+            {BENEFITS.map((b) => (
+              <label key={b.value} className="flex items-center gap-2 text-sm text-ink-2">
+                <input
+                  type="checkbox"
+                  name="benefits"
+                  value={b.value}
+                  defaultChecked={job?.benefits.includes(b.value)}
+                  className="size-4 accent-[var(--accent)]"
+                />
+                {b.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
       </Section>
 
       <Section title="Who you're looking for" intro="Candidates are scored against these. Be specific: vague requirements make every score look the same.">

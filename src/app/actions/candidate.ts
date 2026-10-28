@@ -116,6 +116,10 @@ export async function applyForJob(_: FormState, form: FormData): Promise<FormSta
     mustHaveAnswers: answers.map((a) => a === "yes"),
     coverNote,
   });
+  // It's in their applications now, so it no longer needs to be saved.
+  await db
+    .delete(schema.savedJobs)
+    .where(and(eq(schema.savedJobs.userId, session.userId), eq(schema.savedJobs.jobId, jobId)));
   revalidatePath("/candidate");
   redirect(`/candidate?applied=${jobId}`);
 }
@@ -135,6 +139,23 @@ export async function withdrawApplication(form: FormData) {
       ),
     );
   revalidatePath("/candidate");
+}
+
+/** Saves or un-saves a job for the signed-in candidate. */
+export async function setJobSaved(jobId: string, saved: boolean): Promise<{ saved: boolean } | { error: string }> {
+  const session = await requireRole("candidate", `/jobs/${jobId}`);
+  if (!isUuid(jobId)) return { error: "That job doesn't exist." };
+  const where = and(eq(schema.savedJobs.userId, session.userId), eq(schema.savedJobs.jobId, jobId));
+  if (!saved) {
+    await db.delete(schema.savedJobs).where(where);
+  } else {
+    const row = await getJob(jobId);
+    if (!row || !isAcceptingApplications(row.job)) return { error: "This job is no longer taking applications." };
+    await db.insert(schema.savedJobs).values({ userId: session.userId, jobId }).onConflictDoNothing();
+  }
+  // Refresh whichever page the button is on, so it keeps showing the new state.
+  revalidatePath("/", "layout");
+  return { saved };
 }
 
 const AUTOFILL_DAILY_LIMIT = 10;
