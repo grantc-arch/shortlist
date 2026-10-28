@@ -53,7 +53,7 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
       )}
 
       {jobs.length === 0 ? (
-        <div className="panel p-8">
+        <div className="box p-8">
           <h2 className="text-xl font-semibold">Post your first job</h2>
           <p className="mt-1 max-w-prose text-ink-2">
             Describe the role, list what you need, and choose what matters most. Candidates on the job board see how well
@@ -66,7 +66,7 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
       ) : (
         <section>
           <h2 className="text-xl font-semibold">Your jobs</h2>
-          <ul className="panel mt-3 divide-y divide-line">
+          <ul className="list mt-3 divide-y divide-line">
             {jobs.map(({ job, applicants, newCount, top }) => (
               <li key={job.id} className="relative grid gap-4 p-5 md:grid-cols-[1fr_auto_auto] md:items-center md:gap-8">
                 <div className="min-w-0">

@@ -44,7 +44,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ id: stri
         <ApplyForm jobId={job.id} mustHaves={job.mustHaves} defaults={defaults} />
       </div>
       <aside className="lg:sticky lg:top-6 lg:self-start">
-        <div className="panel p-5">
+        <div className="box p-5">
           <FitBreakdown match={match} heading="Your match" />
         </div>
       </aside>

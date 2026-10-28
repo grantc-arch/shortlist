@@ -63,14 +63,14 @@ export default async function CandidateHome({ searchParams }: { searchParams: Pr
       <section>
         <h2 className="text-xl font-semibold">My applications</h2>
         {apps.length === 0 ? (
-          <div className="panel mt-3 p-6">
+          <div className="box mt-3 p-6">
             <p className="font-semibold">You haven't applied for anything yet.</p>
             <p className="mt-1 text-ink-2">
               Your best matches are below, or <Link href="/jobs" className="link">browse all jobs</Link>.
             </p>
           </div>
         ) : (
-          <ul className="panel mt-3 divide-y divide-line">
+          <ul className="list mt-3 divide-y divide-line">
             {apps.map(({ application: a, job, companyName }) => {
               const match = scoreMatch(jobForMatching(job), me, a.mustHaveAnswers);
               return (

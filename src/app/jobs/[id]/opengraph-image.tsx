@@ -44,8 +44,8 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#f2f5f4",
-          color: "#142b29",
+          background: "#ffffff",
+          color: "#171717",
           padding: "72px 80px",
           fontFamily: "Schibsted Grotesk",
         }}
@@ -60,14 +60,14 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           <div style={{ fontSize: title.length > 32 ? 64 : 84, fontWeight: 800, lineHeight: 1.05, letterSpacing: -2 }}>
             {title}
           </div>
-          <div style={{ fontSize: 40, color: "#3c524f", marginTop: 18 }}>{company}</div>
-          <div style={{ display: "flex", gap: 28, fontSize: 30, color: "#3c524f", marginTop: 28 }}>
+          <div style={{ fontSize: 40, color: "#404040", marginTop: 18 }}>{company}</div>
+          <div style={{ display: "flex", gap: 28, fontSize: 30, color: "#404040", marginTop: 28 }}>
             {facts.map((f) => (
               <div key={f}>{f}</div>
             ))}
           </div>
         </div>
-        <div style={{ display: "flex", fontSize: 28, color: "#b3305b", fontWeight: 600 }}>
+        <div style={{ display: "flex", fontSize: 28, color: "#171717", fontWeight: 600 }}>
           See your match score before you apply
         </div>
       </div>

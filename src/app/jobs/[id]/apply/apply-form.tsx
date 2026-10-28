@@ -19,7 +19,7 @@ export function ApplyForm({
       <input type="hidden" name="jobId" value={jobId} />
 
       {mustHaves.length > 0 && (
-        <fieldset className="panel p-5">
+        <fieldset className="section">
           <legend className="sr-only">Must-haves</legend>
           <h2 className="text-lg font-semibold">Must-haves</h2>
           <p className="mt-1 text-sm text-ink-2">
@@ -54,7 +54,7 @@ export function ApplyForm({
         </fieldset>
       )}
 
-      <div className="panel p-5">
+      <div className="section">
         <label className="label text-lg" htmlFor="coverNote">
           Note to the employer
         </label>

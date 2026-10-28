@@ -31,7 +31,7 @@ export function JobMeta({ job }: { job: Job }) {
 
 export function JobList({ items }: { items: JobListItem[] }) {
   return (
-    <ul className="panel divide-y divide-line">
+    <ul className="list divide-y divide-line">
       {items.map(({ job, companyName, match }) => (
         <li key={job.id} className="relative grid gap-4 p-5 sm:grid-cols-[1fr_11rem] sm:items-center">
           <div className="min-w-0">

@@ -76,7 +76,7 @@ export default async function JobsPage({
         {items.length > 0 ? (
           <JobList items={items} />
         ) : (
-          <div className="panel p-8 text-center">
+          <div className="box p-8 text-center">
             <p className="font-semibold">No open jobs match that search.</p>
             <p className="mt-1 text-ink-2">
               Try a broader keyword or <Link href="/jobs" className="link">clear the filters</Link>.

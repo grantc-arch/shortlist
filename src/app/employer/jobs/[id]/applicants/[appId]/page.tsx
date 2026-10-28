@@ -142,10 +142,10 @@ export default async function ApplicantPage({ params }: { params: Promise<{ id: 
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <div className="panel p-5">
+          <div className="box p-5">
             <FitBreakdown match={match} />
           </div>
-          <div className="panel p-5">
+          <div className="box p-5">
             <NotesForm applicationId={a.id} notes={a.employerNotes} />
           </div>
         </aside>

@@ -40,7 +40,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
       )}
       <section className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
         <div>
-          <h1 className="max-w-[14ch] text-5xl font-extrabold tracking-[-0.03em] sm:text-6xl">
+          <h1 className="max-w-[16ch] text-4xl font-bold tracking-tight sm:text-5xl">
             Know your score before you apply.
           </h1>
           <p className="mt-5 max-w-[46ch] text-lg text-ink-2">
@@ -66,7 +66,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
         </div>
 
         {featured && heroMatch && (
-          <div className="panel p-6">
+          <div className="box p-6">
             <p className="text-sm text-muted">
               {me ? "Your best match right now" : `How ${EXAMPLE.description} scores for`}
             </p>
@@ -110,7 +110,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
               items={jobs.slice(0, 5).map((r) => ({ ...r, match: me ? scoreMatch(jobForMatching(r.job), me) : null }))}
             />
           ) : (
-            <p className="panel p-6 text-ink-2">No jobs posted yet.</p>
+            <p className="box p-6 text-ink-2">No jobs posted yet.</p>
           )}
         </div>
       </section>

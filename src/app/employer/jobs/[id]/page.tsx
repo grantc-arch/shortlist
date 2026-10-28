@@ -98,7 +98,7 @@ export default async function ApplicantsPage({
       )}
 
       {!closed && (
-        <section className="panel mt-6 grid gap-x-8 gap-y-4 p-5 md:grid-cols-[1fr_18rem]">
+        <section className="box mt-6 grid gap-x-8 gap-y-4 p-5 md:grid-cols-[1fr_18rem]">
           <ShareJob url={`${siteUrl()}/jobs/${job.id}`} title={job.title} company={employer.companyName} />
           <div>
             <p className="label">Google for Jobs</p>
@@ -143,7 +143,7 @@ export default async function ApplicantsPage({
       </div>
 
       {shown.length === 0 ? (
-        <div className="panel mt-4 p-8 text-center">
+        <div className="box mt-4 p-8 text-center">
           <p className="font-semibold">{all.length === 0 ? "No applications yet." : "Nobody matches this filter."}</p>
           <p className="mt-1 text-ink-2">
             {all.length === 0
@@ -152,7 +152,7 @@ export default async function ApplicantsPage({
           </p>
         </div>
       ) : (
-        <ol className="panel mt-4 divide-y divide-line">
+        <ol className="list mt-4 divide-y divide-line">
           {shown.map((a) => {
             const rank = all.indexOf(a) + 1;
             const c = a.candidate;

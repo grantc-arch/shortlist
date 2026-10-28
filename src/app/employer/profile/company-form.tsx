@@ -9,7 +9,7 @@ import type { Employer } from "@/db/schema";
 export function CompanyForm({ employer }: { employer: Employer }) {
   const [state, action] = useActionState(saveEmployerProfile, undefined);
   return (
-    <ActionForm action={action} className="panel mt-6 space-y-4 p-5">
+    <ActionForm action={action} className="mt-8 space-y-4">
       <div>
         <label className="label" htmlFor="companyName">Company or organisation</label>
         <input className="input" id="companyName" name="companyName" defaultValue={employer.companyName} required />

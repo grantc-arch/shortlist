@@ -150,7 +150,7 @@ export function JobForm({ job, defaultCity }: { job?: Job; defaultCity: string }
 
 function Section({ title, intro, children }: { title: string; intro?: string; children: React.ReactNode }) {
   return (
-    <fieldset className="panel space-y-4 p-5">
+    <fieldset className="section space-y-4">
       <legend className="sr-only">{title}</legend>
       <div>
         <h2 className="text-lg font-semibold">{title}</h2>

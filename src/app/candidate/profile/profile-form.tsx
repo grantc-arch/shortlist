@@ -245,7 +245,7 @@ function CvAutofill({
   }
 
   return (
-    <section className="panel border-l-4 border-l-[var(--fit-qualification)] p-5" aria-labelledby="autofill-heading">
+    <section className="box p-5" aria-labelledby="autofill-heading">
       <h2 id="autofill-heading" className="text-lg font-semibold">
         Start from your CV
       </h2>
@@ -285,7 +285,7 @@ function CvAutofill({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <fieldset className="panel p-5">
+    <fieldset className="section">
       <legend className="sr-only">{title}</legend>
       <h2 className="mb-4 text-lg font-semibold">{title}</h2>
       {children}

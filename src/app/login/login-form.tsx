@@ -7,7 +7,7 @@ import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
 export function LoginForm({ next }: { next?: string }) {
   const [state, action] = useActionState(login, undefined);
   return (
-    <ActionForm action={action} className="panel mt-6 space-y-4 p-5">
+    <ActionForm action={action} className="mt-8 space-y-4">
       <input type="hidden" name="next" value={next ?? ""} />
       <div>
         <label className="label" htmlFor="email">Email</label>

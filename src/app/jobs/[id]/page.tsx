@@ -85,7 +85,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
 
         {match && (
           // On small screens the full breakdown sits below the description, so show the headline score here.
-          <a href="#match" className="panel mt-5 block p-4 lg:hidden">
+          <a href="#match" className="box mt-5 block p-4 lg:hidden">
             <span className="flex items-baseline justify-between">
               <span className="font-semibold">Your match</span>
               <ScoreNumber total={match.total} className="text-2xl" />
@@ -165,7 +165,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
       </article>
 
       <aside id="match" className="scroll-mt-4 lg:sticky lg:top-6 lg:self-start">
-        <div className="panel p-5">
+        <div className="box p-5">
           {isOwner ? (
             <>
               <h2 className="font-semibold">This is your listing</h2>

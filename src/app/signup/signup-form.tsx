@@ -10,7 +10,7 @@ export function SignupForm({ next, initialRole }: { next?: string; initialRole: 
   const [role, setRole] = useState(initialRole);
 
   return (
-    <ActionForm action={action} className="panel mt-6 space-y-4 p-5">
+    <ActionForm action={action} className="mt-8 space-y-4">
       <input type="hidden" name="next" value={next ?? ""} />
       <fieldset>
         <legend className="label">I want to</legend>
