@@ -41,9 +41,11 @@ export default async function JobsPage({
           <input id="q" name="q" defaultValue={q} placeholder="Job title, company or keyword" className="input min-w-0 flex-1 sm:w-64" />
           <label className="sr-only" htmlFor="city">City</label>
           <select id="city" name="city" defaultValue={city} className="input w-auto">
-            <option value="">All cities</option>
-            {CITIES.map((c) => (
-              <option key={c}>{c}</option>
+            <option value="">All locations</option>
+            {CITIES.filter((c) => c !== "Other").map((c) => (
+              <option key={c} value={c}>
+                Near {c}
+              </option>
             ))}
           </select>
           {candidate && (

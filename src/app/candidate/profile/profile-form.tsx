@@ -3,7 +3,8 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { autofillFromCv, saveProfile } from "@/app/actions/candidate";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
-import { CITIES, QUALIFICATIONS } from "@/lib/constants";
+import { QUALIFICATIONS } from "@/lib/constants";
+import { PlaceInput } from "@/components/place-input";
 import { mergeSuggestions, type DraftField, type ProfileDraft } from "@/lib/autofill-merge";
 import type { CandidateRow } from "@/lib/queries";
 
@@ -21,6 +22,8 @@ export function ProfileForm({
     fullName: c.fullName,
     phone: c.phone,
     city: c.city,
+    cityLat: c.lat,
+    cityLng: c.lng,
     availableFrom: c.availableFrom ?? "",
     willingToRelocate: c.willingToRelocate,
     hasOwnTransport: c.hasOwnTransport,
@@ -87,15 +90,17 @@ export function ProfileForm({
 
         <Section title="Location and availability">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="City you're based in" id="city" fromCv={tag("city")}>
-              <select className="input" id="city" name="city" value={draft.city} onChange={(e) => set("city", e.target.value)} required>
-                <option value="" disabled>
-                  Choose a city
-                </option>
-                {CITIES.map((city) => (
-                  <option key={city}>{city}</option>
-                ))}
-              </select>
+            <Field label="Where you're based" id="city" fromCv={tag("city")} hint="Your suburb or town. Pick it from the list so we can work out distances to jobs.">
+              <PlaceInput
+                id="city"
+                name="city"
+                required
+                value={{ label: draft.city, lat: draft.cityLat, lng: draft.cityLng }}
+                onChange={(p) => {
+                  set("city", p.label);
+                  setDraft((d) => ({ ...d, cityLat: p.lat, cityLng: p.lng }));
+                }}
+              />
             </Field>
             <Field label="Available to start from" id="availableFrom">
               <input className="input" id="availableFrom" name="availableFrom" type="date" value={draft.availableFrom} onChange={(e) => set("availableFrom", e.target.value)} required />

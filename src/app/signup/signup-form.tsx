@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { signup } from "../actions/auth";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
-import { CITIES } from "@/lib/constants";
+import { PlaceField } from "@/components/place-input";
 
 export function SignupForm({ next, initialRole }: { next?: string; initialRole: "candidate" | "employer" }) {
   const [state, action] = useActionState(signup, undefined);
@@ -54,11 +54,8 @@ export function SignupForm({ next, initialRole }: { next?: string; initialRole: 
           </div>
           <div>
             <label className="label" htmlFor="city">Where you're based</label>
-            <select className="input" id="city" name="city" defaultValue="Cape Town">
-              {CITIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
+            <PlaceField id="city" name="city" required describedBy="city-hint" />
+            <p id="city-hint" className="hint">Pick a suburb or town from the list, or type your own.</p>
           </div>
         </>
       )}

@@ -2,6 +2,7 @@ import "server-only";
 import { and, count, desc, eq, getTableColumns, gte, ilike, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { todayInSA } from "./jobs";
+import { COMMUTE_KM, coordsFor, distanceKm } from "./places";
 
 const { jobs, employers, candidates, applications } = schema;
 
@@ -19,13 +20,20 @@ export async function listOpenJobs({ q, city }: { q?: string; city?: string } = 
     const term = `%${q.replace(/[%_]/g, "")}%`;
     filters.push(or(ilike(jobs.title, term), ilike(jobs.description, term), ilike(employers.companyName, term))!);
   }
-  if (city) filters.push(eq(jobs.city, city));
-  return db
+  const rows = await db
     .select({ job: jobs, companyName: employers.companyName })
     .from(jobs)
     .innerJoin(employers, eq(employers.userId, jobs.employerId))
     .where(and(...filters))
     .orderBy(desc(jobs.createdAt));
+  if (!city) return rows;
+  // "Near Cape Town": within commuting distance, or naming the city if a job has no coordinates.
+  const centre = coordsFor({ city });
+  return rows.filter(({ job }) => {
+    const at = coordsFor(job);
+    if (centre && at) return distanceKm(centre, at) <= COMMUTE_KM;
+    return job.city.toLowerCase().includes(city.toLowerCase());
+  });
 }
 
 /** Real (non-demo) jobs taking applications, for the sitemap. */

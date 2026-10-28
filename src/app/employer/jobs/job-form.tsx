@@ -3,7 +3,9 @@
 import { useActionState, useState } from "react";
 import { saveJob } from "@/app/actions/employer";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
-import { CITIES, EMPLOYMENT_LABELS, QUALIFICATIONS, WORKPLACE_LABELS } from "@/lib/constants";
+import { EMPLOYMENT_LABELS, QUALIFICATIONS, WORKPLACE_LABELS } from "@/lib/constants";
+import { PlaceField } from "@/components/place-input";
+import type { Place } from "@/lib/places";
 import { CRITERIA, DEFAULT_WEIGHTS, type Weights } from "@/lib/matching";
 import type { Job } from "@/db/schema";
 
@@ -11,11 +13,11 @@ const WEIGHT_HELP: Record<keyof Weights, string> = {
   qualification: "Level of study and whether the field matches",
   experience: "Years of relevant work against your minimum",
   skills: "How many of your listed skills they have",
-  location: "Same city, commutable, or willing to relocate",
+  location: "Distance from the job (within 25 km is full marks), or willing to relocate",
   availability: "Whether they can start by your start date",
 };
 
-export function JobForm({ job, defaultCity }: { job?: Job; defaultCity: string }) {
+export function JobForm({ job, defaultPlace }: { job?: Job; defaultPlace: Place }) {
   const [state, action] = useActionState(saveJob, undefined);
   const [weights, setWeights] = useState<Weights>(job?.weights ?? DEFAULT_WEIGHTS);
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
@@ -29,12 +31,13 @@ export function JobForm({ job, defaultCity }: { job?: Job; defaultCity: string }
           <input className="input" id="title" name="title" defaultValue={job?.title} placeholder="e.g. Office Administrator" required />
         </Field>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="City" id="city">
-            <select className="input" id="city" name="city" defaultValue={job?.city ?? defaultCity}>
-              {CITIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
+          <Field label="Location" id="city">
+            <PlaceField
+              id="city"
+              name="city"
+              required
+              defaultValue={job ? { label: job.city, lat: job.lat, lng: job.lng } : defaultPlace}
+            />
           </Field>
           <Field label="Workplace" id="workplace">
             <select className="input" id="workplace" name="workplace" defaultValue={job?.workplace ?? "on_site"}>

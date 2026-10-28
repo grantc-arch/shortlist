@@ -9,6 +9,8 @@ export interface ProfileDraft {
   fullName: string;
   phone: string;
   city: string;
+  cityLat: number | null;
+  cityLng: number | null;
   availableFrom: string;
   willingToRelocate: boolean;
   hasOwnTransport: boolean;

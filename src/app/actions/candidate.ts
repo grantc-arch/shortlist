@@ -6,7 +6,8 @@ import { and, count, eq, gt } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { requireRole } from "@/lib/auth";
-import { CITIES, MAX_CV_BYTES } from "@/lib/constants";
+import { MAX_CV_BYTES } from "@/lib/constants";
+import { parsePlace } from "@/lib/places";
 import { parseList, QUALIFICATION_ORDER } from "@/lib/matching";
 import { getApplication, getCandidate, getJob, isUuid } from "@/lib/queries";
 import { profileGaps } from "@/lib/format";
@@ -32,7 +33,6 @@ const profileSchema = z.object({
     .string()
     .trim()
     .regex(PHONE_PATTERN, "Enter a valid phone number, for example 082 123 4567"),
-  city: z.enum(CITIES, "Choose the city you're based in"),
   willingToRelocate: z.boolean(),
   qualificationLevel: z.enum(QUALIFICATION_ORDER),
   fieldOfStudy: z.string().trim().max(120),
@@ -49,7 +49,6 @@ export async function saveProfile(_: FormState, form: FormData): Promise<FormSta
   const parsed = profileSchema.safeParse({
     fullName: form.get("fullName"),
     phone: form.get("phone"),
-    city: form.get("city"),
     willingToRelocate: form.get("willingToRelocate") === "on",
     qualificationLevel: form.get("qualificationLevel"),
     fieldOfStudy: form.get("fieldOfStudy") ?? "",
@@ -62,6 +61,8 @@ export async function saveProfile(_: FormState, form: FormData): Promise<FormSta
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { consent: _consent, ...data } = parsed.data;
+  const location = parsePlace(form, "city", "Enter where you're based");
+  if ("error" in location) return { error: location.error };
 
   const existing = await getCandidate(session.userId);
   const cv = form.get("cv");
@@ -78,6 +79,9 @@ export async function saveProfile(_: FormState, form: FormData): Promise<FormSta
     .update(schema.candidates)
     .set({
       ...data,
+      city: location.place.label,
+      lat: location.place.lat,
+      lng: location.place.lng,
       ...(cvUpdate ?? {}),
       popiaConsentAt: existing?.popiaConsentAt ?? new Date(),
       updatedAt: new Date(),

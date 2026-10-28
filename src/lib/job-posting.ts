@@ -98,6 +98,7 @@ export function buildJobPosting(job: Job, employer: JobEmployer, baseUrl: string
   const url = `${baseUrl}/jobs/${job.id}`;
   const remote = job.workplace === "remote";
   const known = job.city !== "Other";
+  const mainCity = job.city.split(",").pop()!.trim();
 
   const salary =
     job.salaryMin || job.salaryMax
@@ -139,7 +140,7 @@ export function buildJobPosting(job: Job, employer: JobEmployer, baseUrl: string
             address: {
               "@type": "PostalAddress",
               ...(known ? { addressLocality: job.city } : {}),
-              ...(known && PROVINCES[job.city] ? { addressRegion: PROVINCES[job.city] } : {}),
+              ...(known && PROVINCES[mainCity] ? { addressRegion: PROVINCES[mainCity] } : {}),
               addressCountry: "ZA",
             },
           },

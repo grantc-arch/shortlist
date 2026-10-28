@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { endSession, getSession, hashPassword, startSession, verifyPassword } from "@/lib/auth";
-import { CITIES } from "@/lib/constants";
+import { parsePlace } from "@/lib/places";
 
 export type FormState = { error?: string } | undefined;
 
@@ -24,7 +24,6 @@ const signupSchema = z.discriminatedUnion("role", [
     email: z.email("Enter a valid email address"),
     password: z.string().min(8, "Use at least 8 characters for your password"),
     companyName: z.string().trim().min(2, "Enter your company or organisation name"),
-    city: z.enum(CITIES, "Choose where you're based"),
   }),
 ]);
 
@@ -32,6 +31,8 @@ export async function signup(_: FormState, form: FormData): Promise<FormState> {
   const parsed = signupSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const data = parsed.data;
+  const location = data.role === "employer" ? parsePlace(form, "city", "Enter where you're based") : null;
+  if (location && "error" in location) return { error: location.error };
   const email = data.email.toLowerCase();
 
   const existing = await db.query.users.findFirst({ where: eq(schema.users.email, email) });
@@ -45,7 +46,8 @@ export async function signup(_: FormState, form: FormData): Promise<FormState> {
   if (data.role === "candidate") {
     await db.insert(schema.candidates).values({ userId: user.id, fullName: data.fullName });
   } else {
-    await db.insert(schema.employers).values({ userId: user.id, companyName: data.companyName, city: data.city });
+    const { label, lat, lng } = location!.place;
+    await db.insert(schema.employers).values({ userId: user.id, companyName: data.companyName, city: label, lat, lng });
   }
 
   await startSession({ userId: user.id, role: user.role, email });

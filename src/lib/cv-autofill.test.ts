@@ -18,6 +18,8 @@ const empty: ProfileDraft = {
   fullName: "",
   phone: "",
   city: "",
+  cityLat: null,
+  cityLng: null,
   availableFrom: "",
   willingToRelocate: false,
   hasOwnTransport: false,

@@ -6,7 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { requireRole } from "@/lib/auth";
-import { CITIES } from "@/lib/constants";
+import { parsePlace } from "@/lib/places";
 import { normaliseWeights, parseLines, parseList, QUALIFICATION_ORDER } from "@/lib/matching";
 import { isUuid } from "@/lib/queries";
 import { todayInSA } from "@/lib/jobs";
@@ -21,7 +21,6 @@ const optionalDate = z.preprocess((v) => (v === "" || v == null ? null : v), z.i
 const jobSchema = z
   .object({
     title: z.string().trim().min(3, "Give the job a title").max(100),
-    city: z.enum(CITIES, "Choose where the job is based"),
     workplace: z.enum(["on_site", "hybrid", "remote"]),
     employmentType: z.enum(["full_time", "part_time", "contract", "internship"]),
     salaryMin: optionalInt,
@@ -47,7 +46,6 @@ function parseJobForm(form: FormData) {
   const lines = (k: string) => parseLines(String(form.get(k) ?? ""));
   const parsed = jobSchema.safeParse({
     title: form.get("title"),
-    city: form.get("city"),
     workplace: form.get("workplace"),
     employmentType: form.get("employmentType"),
     salaryMin: form.get("salaryMin"),
@@ -77,6 +75,9 @@ export async function saveJob(_: FormState, form: FormData): Promise<FormState> 
   const session = await requireRole("employer");
   const { parsed, weights } = parseJobForm(form);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const location = parsePlace(form, "city", "Enter where the job is based");
+  if ("error" in location) return { error: location.error };
+  const place = { city: location.place.label, lat: location.place.lat, lng: location.place.lng };
 
   const jobId = String(form.get("jobId") ?? "");
   let id: string;
@@ -84,7 +85,7 @@ export async function saveJob(_: FormState, form: FormData): Promise<FormState> 
     if (!isUuid(jobId)) return { error: "That job doesn't exist." };
     const [updated] = await db
       .update(schema.jobs)
-      .set({ ...parsed.data, weights, updatedAt: new Date() })
+      .set({ ...parsed.data, ...place, weights, updatedAt: new Date() })
       .where(and(eq(schema.jobs.id, jobId), eq(schema.jobs.employerId, session.userId)))
       .returning({ id: schema.jobs.id });
     if (!updated) return { error: "That job doesn't exist or isn't yours." };
@@ -92,7 +93,7 @@ export async function saveJob(_: FormState, form: FormData): Promise<FormState> 
   } else {
     const [created] = await db
       .insert(schema.jobs)
-      .values({ ...parsed.data, weights, employerId: session.userId })
+      .values({ ...parsed.data, ...place, weights, employerId: session.userId })
       .returning({ id: schema.jobs.id });
     id = created.id;
   }
@@ -142,7 +143,6 @@ export async function updateApplication(form: FormData) {
 
 const employerSchema = z.object({
   companyName: z.string().trim().min(2, "Enter your company name").max(100),
-  city: z.enum(CITIES),
   about: z.string().trim().max(1500, "Keep the description under 1 500 characters"),
   website: z.preprocess((v) => (v === "" ? null : v), z.url("Enter a full website address, starting with https://").nullable()),
 });
@@ -151,7 +151,13 @@ export async function saveEmployerProfile(_: FormState, form: FormData): Promise
   const session = await requireRole("employer");
   const parsed = employerSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  await db.update(schema.employers).set(parsed.data).where(eq(schema.employers.userId, session.userId));
+  const location = parsePlace(form, "city", "Enter where you're based");
+  if ("error" in location) return { error: location.error };
+  const { label, lat, lng } = location.place;
+  await db
+    .update(schema.employers)
+    .set({ ...parsed.data, city: label, lat, lng })
+    .where(eq(schema.employers.userId, session.userId));
   revalidatePath("/", "layout");
   redirect("/employer?saved=1");
 }

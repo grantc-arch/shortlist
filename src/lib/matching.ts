@@ -8,6 +8,7 @@
  * the employer decides.
  */
 import { COMMUTABLE } from "./constants";
+import { COMMUTE_KM, LOCAL_KM, coordsFor, distanceKm } from "./places";
 
 export const QUALIFICATION_ORDER = [
   "none",
@@ -41,6 +42,8 @@ export const DEFAULT_WEIGHTS: Weights = {
 
 export interface JobForMatching {
   city: string;
+  lat?: number | null;
+  lng?: number | null;
   workplace: "on_site" | "hybrid" | "remote";
   startDate: string | null; // YYYY-MM-DD
   minQualification: Qualification;
@@ -53,6 +56,8 @@ export interface JobForMatching {
 
 export interface CandidateForMatching {
   city: string;
+  lat?: number | null;
+  lng?: number | null;
   willingToRelocate: boolean;
   qualificationLevel: Qualification;
   fieldOfStudy: string;
@@ -142,11 +147,26 @@ export function commutable(a: string, b: string): boolean {
 
 function scoreLocation(job: JobForMatching, c: CandidateForMatching) {
   if (job.workplace === "remote") return { fraction: 1, detail: "Remote role" };
+  const where = c.city || "an unknown place";
+
+  // With coordinates for both, use the real distance.
+  const from = c.city ? coordsFor(c) : null;
+  const to = coordsFor(job);
+  if (from && to) {
+    const km = Math.round(distanceKm(from, to));
+    const away = km < 3 ? "close by" : `${km} km away`;
+    if (km <= LOCAL_KM) return { fraction: 1, detail: `Based in ${where}, ${away}` };
+    if (km <= COMMUTE_KM) return { fraction: 0.75, detail: `Based in ${where}, ${away}: within commuting distance` };
+    if (c.willingToRelocate) return { fraction: 0.5, detail: `Based in ${where}, ${away}, willing to relocate` };
+    return { fraction: 0, detail: `Based in ${where}, ${away}, not willing to relocate` };
+  }
+
+  // Otherwise compare place names.
   if (c.city && norm(c.city) === norm(job.city)) return { fraction: 1, detail: `Based in ${job.city}` };
   if (c.city && commutable(c.city, job.city))
     return { fraction: 0.75, detail: `Based in ${c.city}, within commuting distance` };
-  if (c.willingToRelocate) return { fraction: 0.5, detail: `Based in ${c.city || "another city"}, willing to relocate` };
-  return { fraction: 0, detail: `Based in ${c.city || "an unknown city"}, not willing to relocate` };
+  if (c.willingToRelocate) return { fraction: 0.5, detail: `Based in ${where}, willing to relocate` };
+  return { fraction: 0, detail: `Based in ${where}, not willing to relocate` };
 }
 
 const DAY_MS = 86_400_000;

@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { saveEmployerProfile } from "@/app/actions/employer";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
-import { CITIES } from "@/lib/constants";
+import { PlaceField } from "@/components/place-input";
 import type { Employer } from "@/db/schema";
 
 export function CompanyForm({ employer }: { employer: Employer }) {
@@ -17,11 +17,12 @@ export function CompanyForm({ employer }: { employer: Employer }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="city">Based in</label>
-          <select className="input" id="city" name="city" defaultValue={employer.city}>
-            {CITIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+          <PlaceField
+            id="city"
+            name="city"
+            required
+            defaultValue={{ label: employer.city, lat: employer.lat, lng: employer.lng }}
+          />
         </div>
         <div>
           <label className="label" htmlFor="website">Website</label>

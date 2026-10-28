@@ -19,7 +19,7 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
       </Link>
       <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Edit {row.job.title}</h1>
       <p className="mt-2 max-w-prose text-ink-2">Changing requirements or weights re-ranks everyone who has already applied.</p>
-      <JobForm job={row.job} defaultCity={row.employer.city} />
+      <JobForm job={row.job} defaultPlace={{ label: row.employer.city, lat: row.employer.lat, lng: row.employer.lng }} />
     </div>
   );
 }

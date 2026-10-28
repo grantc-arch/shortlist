@@ -1,5 +1,6 @@
 import {
   boolean,
+  doublePrecision,
   customType,
   date,
   integer,
@@ -67,6 +68,9 @@ export const employers = pgTable("employers", {
     .references(() => users.id, { onDelete: "cascade" }),
   companyName: text("company_name").notNull(),
   city: text("city").notNull(),
+  // Coordinates of the location, when known (picked from suggestions or a main city).
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
   about: text("about").notNull().default(""),
   website: text("website"),
   // Demo companies from the seed script. Their jobs are labelled on the site and never listed on Google.
@@ -80,6 +84,8 @@ export const candidates = pgTable("candidates", {
   fullName: text("full_name").notNull(),
   phone: text("phone").notNull().default(""),
   city: text("city").notNull().default(""),
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
   willingToRelocate: boolean("willing_to_relocate").notNull().default(false),
   qualificationLevel: qualificationEnum("qualification_level").notNull().default("none"),
   fieldOfStudy: text("field_of_study").notNull().default(""),
@@ -101,6 +107,8 @@ export const jobs = pgTable("jobs", {
     .references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   city: text("city").notNull(),
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
   workplace: workplaceEnum("workplace").notNull().default("on_site"),
   employmentType: employmentTypeEnum("employment_type").notNull().default("full_time"),
   salaryMin: integer("salary_min"),

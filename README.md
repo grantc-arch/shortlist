@@ -18,7 +18,7 @@ Each job is scored on five criteria. The employer sets a weight for each (the we
 | Qualification | 60% for meeting the minimum level (partial credit below it), 40% for a field of study matching the job's keywords |
 | Experience | Years of relevant experience against the minimum, capped at full marks |
 | Skills | Share of the job's listed skills the candidate has (loose matching, so "Excel" matches "Microsoft Excel") |
-| Location | Same city 100%, commutable (e.g. Stellenbosch to Cape Town) 75%, willing to relocate 50%, remote roles always 100% |
+| Location | Straight-line distance: within 25 km 100%, within 60 km (commutable) 75%, further away 50% if willing to relocate, otherwise 0%. Remote roles always 100%. Places without coordinates fall back to comparing names |
 | Availability | Can start by the start date 100%, within 2 weeks 70%, within a month 40%, later 10% |
 
 **Must-haves** are yes/no questions the candidate answers when applying. A "no" is flagged and sorts the applicant below everyone who meets all must-haves, but they stay visible.
@@ -58,6 +58,38 @@ On the profile page, a candidate can upload their CV and press **Fill in from my
 
 The schema and clean-up live in [`src/lib/cv-extraction.ts`](src/lib/cv-extraction.ts), the API call in [`src/lib/cv-autofill.ts`](src/lib/cv-autofill.ts), and the merge rules in [`src/lib/autofill-merge.ts`](src/lib/autofill-merge.ts).
 
+## Locations
+
+Location fields (employer sign-up, company details, candidate profile, job form) suggest South African suburbs and towns as you type, using [Photon](https://photon.komoot.io), komoot's free geocoder for [OpenStreetMap](https://www.openstreetmap.org/copyright) data. No API key or billing is needed.
+
+- Picking a suggestion stores its coordinates, which the match score uses for real distances. "Claremont, Cape Town" and "Claremont, Durban" are told apart.
+- People can also type a place that isn't suggested. If it names a main city it still gets coordinates; otherwise location is scored by comparing names.
+- Searches go through the app's own `/api/places` route, so visitors' typing isn't sent straight to a third party, and answers are cached for a day.
+- The public Photon server is free under fair use. If the site grows, run your own Photon instance or switch providers by changing `PLACES_API_URL`.
+
+## Forgot password
+
+**Forgot your password?** on the log-in page emails a reset link.
+
+- Links work once, for 60 minutes, and only a hash of each is stored.
+- The form always says the same thing, so it can't be used to find out who has an account, and sends at most three emails an hour per account.
+- Resetting signs the account out on every other device.
+- Emails go through any SMTP server. Without one, `npm run dev` prints the link in the terminal, and the live site says password reset isn't available.
+
+### Sending email with Gmail (free, no domain needed)
+
+1. Turn on [2-Step Verification](https://myaccount.google.com/security) for the Google account.
+2. Create an [app password](https://myaccount.google.com/apppasswords) and copy the 16-character code.
+3. Add these environment variables (in `.env.local`, and in Vercel):
+   ```
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=465
+   SMTP_USER=your.address@gmail.com
+   SMTP_PASS=the app password, without spaces
+   ```
+
+Gmail allows about 500 emails a day and sends from your own address. Once the site has its own domain, a provider such as [Resend](https://resend.com) or Brevo is better: use its SMTP settings and set `EMAIL_FROM`, for example `Shortlist <no-reply@yourdomain.co.za>`.
+
 ## Tech stack
 
 - [Next.js](https://nextjs.org) (App Router, server components and server actions), TypeScript, Tailwind CSS
@@ -66,7 +98,8 @@ The schema and clean-up live in [`src/lib/cv-extraction.ts`](src/lib/cv-extracti
 - Email and password login with bcrypt-hashed passwords and a signed, HTTP-only session cookie (`jose`)
 - CVs stored in the database (PDF only, 2 MB cap), downloadable only by the candidate and employers they applied to
 - [Claude API](https://platform.claude.com/docs) (`@anthropic-ai/sdk`) for CV auto-fill
-- Vitest for the matching engine, Google markup and CV auto-fill rules
+- Nodemailer for password reset emails, Photon (OpenStreetMap) for place suggestions
+- Vitest for the matching engine, distances, Google markup and CV auto-fill rules
 
 ## Run it locally
 
@@ -112,7 +145,8 @@ npm run db:reset            # delete the local database entirely and set it up a
      `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
 5. Deploy. Every push to `main` redeploys.
 6. **Optional: CV auto-fill.** Add `ANTHROPIC_API_KEY` in Vercel and redeploy.
-7. **Optional: Google for Jobs**, once real employers are posting:
+7. **Optional: password reset emails.** Add the four `SMTP_` variables (see [Forgot password](#forgot-password)) and redeploy.
+8. **Optional: Google for Jobs**, once real employers are posting:
    1. Add `LIST_JOBS_ON_GOOGLE` = `true` in Vercel and redeploy.
    2. In [Google Search Console](https://search.google.com/search-console), add a **URL prefix** property for your site address and choose the **HTML tag** method. Copy the `content` value into a `GOOGLE_SITE_VERIFICATION` variable, redeploy, then press Verify.
    3. Under **Sitemaps**, submit `sitemap.xml`.
@@ -147,6 +181,6 @@ drizzle/              SQL migrations
 - No email notifications yet (new applicant, status change), and no way for employers to invite someone to apply by email. [Resend](https://resend.com) would be a simple addition.
 - Google listing has no moderation: once switched on, any employer's open job is offered to Google. A live product would want new employers approved first.
 - CV auto-fill sends the CV to Anthropic's API. A live product should say so in its privacy policy.
-- No password reset or email verification yet.
+- Email addresses aren't verified at sign-up.
 - CVs live in the database, which is fine at demo scale. At larger scale they should move to object storage (Supabase Storage, Vercel Blob or S3).
 - POPIA basics are covered (consent before sharing, CV access control, self-service account deletion), but a live product would also need a privacy policy and a data retention period for closed jobs.

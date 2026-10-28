@@ -6,7 +6,17 @@ import nodemailer from "nodemailer";
  * such as Resend or Brevo once you have your own domain. See README.
  */
 export function emailConfigured(): boolean {
-  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && fromAddress());
+}
+
+/**
+ * Who emails come from: EMAIL_FROM, or the SMTP login when that's an email address
+ * (as with Gmail). Some providers use a plain username, so EMAIL_FROM is needed there.
+ */
+function fromAddress(): string | null {
+  if (process.env.EMAIL_FROM) return process.env.EMAIL_FROM;
+  const user = process.env.SMTP_USER ?? "";
+  return user.includes("@") ? `Shortlist <${user}>` : null;
 }
 
 export interface Email {
@@ -30,7 +40,7 @@ export async function sendEmail(email: Email): Promise<void> {
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
   await transport.sendMail({
-    from: process.env.EMAIL_FROM || `Shortlist <${process.env.SMTP_USER}>`,
+    from: fromAddress()!,
     ...email,
   });
 }

@@ -15,7 +15,7 @@ export default async function NewJobPage() {
         Your listing goes live on the job board straight away. Applicants are ranked using the requirements and weights
         you set below, and you can change them later.
       </p>
-      <JobForm defaultCity={employer?.city ?? "Cape Town"} />
+      <JobForm defaultPlace={{ label: employer?.city ?? "", lat: employer?.lat ?? null, lng: employer?.lng ?? null }} />
     </div>
   );
 }

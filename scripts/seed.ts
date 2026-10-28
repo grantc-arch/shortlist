@@ -14,6 +14,7 @@ import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { closeDb, db, schema } from "../src/db";
 import type { Weights } from "../src/lib/matching";
+import { CITY_COORDS } from "../src/lib/places";
 
 const PASSWORD = "demo-password";
 const RESET = process.argv.includes("--reset");
@@ -415,6 +416,13 @@ async function main() {
         coverNote: "",
         createdAt: daysAgo(2),
       });
+    }
+  }
+
+  // Give every demo place its city's coordinates, so distances work.
+  for (const [city, [lat, lng]] of Object.entries(CITY_COORDS)) {
+    for (const table of [schema.employers, schema.candidates, schema.jobs]) {
+      await db.update(table).set({ lat, lng }).where(eq(table.city, city));
     }
   }
 

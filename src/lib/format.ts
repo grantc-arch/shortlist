@@ -27,6 +27,8 @@ export function timeAgo(d: Date): string {
 
 export const jobForMatching = (j: Job): JobForMatching => ({
   city: j.city,
+  lat: j.lat,
+  lng: j.lng,
   workplace: j.workplace,
   startDate: j.startDate,
   minQualification: j.minQualification,
@@ -39,6 +41,8 @@ export const jobForMatching = (j: Job): JobForMatching => ({
 
 export const candidateForMatching = (c: Candidate): CandidateForMatching => ({
   city: c.city,
+  lat: c.lat,
+  lng: c.lng,
   willingToRelocate: c.willingToRelocate,
   qualificationLevel: c.qualificationLevel,
   fieldOfStudy: c.fieldOfStudy,

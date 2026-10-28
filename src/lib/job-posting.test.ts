@@ -9,6 +9,8 @@ const job: Job = {
   employerId: "22222222-2222-4222-8222-222222222222",
   title: "Administrator",
   city: "Cape Town",
+  lat: null,
+  lng: null,
   workplace: "on_site",
   employmentType: "full_time",
   salaryMin: 20000,
