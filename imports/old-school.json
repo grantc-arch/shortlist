@@ -2,7 +2,11 @@
   "jobs": [
     {
       "title": "Executive Assistant (B2B / Schools)",
-      "location": { "label": "Brackengate, Cape Town", "lat": -33.8667, "lng": 18.6833 },
+      "location": {
+        "label": "Brackengate, Cape Town",
+        "lat": -33.8667,
+        "lng": 18.6833
+      },
       "workplace": "hybrid",
       "employmentType": "full_time",
       "description": "Old School B2B is a fast-paced, fast-growing division of the Old School brand, designing bespoke merchandise for more than a thousand corporate clients.\n\nWe're looking for an Executive Assistant to the two Directors of the B2B channel: someone who keeps the day running, keeps projects moving and makes the whole team faster. You'll sit at the centre of Sales, Account Management, Product and Operations, close to the clients, the projects and the decisions.\n\nYou'll report to the two Directors of the B2B channel, and work from our Brackengate office three days a week and from home for the rest. A relevant tertiary qualification is a bonus, and so is being familiar with AI tools such as Claude and ChatGPT, or keen to learn.",
@@ -32,11 +36,21 @@
         "I'm fluent in Microsoft Excel, Outlook and Teams",
         "I have at least 2 years' experience as an Executive Assistant, PA or similar role"
       ],
-      "weights": { "qualification": 10, "experience": 30, "skills": 30, "location": 20, "availability": 10 }
+      "weights": {
+        "qualification": 10,
+        "experience": 30,
+        "skills": 30,
+        "location": 20,
+        "availability": 10
+      }
     },
     {
       "title": "Business Development Executive: B2B Corporate",
-      "location": { "label": "Brackengate, Cape Town", "lat": -33.8667, "lng": 18.6833 },
+      "location": {
+        "label": "Brackengate, Cape Town",
+        "lat": -33.8667,
+        "lng": 18.6833
+      },
       "workplace": "hybrid",
       "employmentType": "full_time",
       "description": "Old School B2B is a fast-paced, fast-growing division of the Old School brand, designing bespoke merchandise for more than a thousand corporate clients.\n\nWe're looking for a sharp, people-savvy Business Development Executive to help Old School grow: someone who loves connecting with people, understands how products and operations fit together, and can confidently take our offering to new clients.\n\nThe role sits where sales, product and strategy meet. You'll be front-facing: driving outbound, converting the inbound our marketing brings in, opening new relationships, and spotting opportunities that bridge our product, design and operations teams. If you thrive in a fast-moving environment, learn a business inside-out and like seeing your ideas turn into real impact, we'd like to hear from you.\n\nYou'll report to the Commercial Director: Growth, and work from our Brackengate office three days a week and from home for the rest. A relevant tertiary qualification, experience in product or the creative industries, and experience with HubSpot and Cin7 are all a bonus.",
@@ -68,7 +82,351 @@
         "I have at least 1 year's experience in sales, business development or a client-facing role",
         "I'm comfortable working in a CRM and preparing quotes"
       ],
-      "weights": { "qualification": 10, "experience": 25, "skills": 35, "location": 20, "availability": 10 }
+      "weights": {
+        "qualification": 10,
+        "experience": 25,
+        "skills": 35,
+        "location": 20,
+        "availability": 10
+      }
+    },
+    {
+      "title": "Social Media Strategist",
+      "location": {
+        "label": "Brackengate, Cape Town",
+        "lat": -33.8667,
+        "lng": 18.6833
+      },
+      "workplace": "on_site",
+      "employmentType": "full_time",
+      "description": "Old School is a premium sport retail brand and creative house based in Cape Town, and the in-house agency for some of the biggest names in sport, from Liverpool FC and Real Madrid to Orlando Pirates, Kaizer Chiefs and the Springboks. Our team of 15+ creatives ships 500+ designs a week, and stores, kit drops, derbies and launches land on our feeds constantly, often on more than one account at once.\n\nAs our Social Media Strategist, you own social for every account Old School runs, from the plan to the post to the numbers. Each account has its own audience, approval rules and calendar, and you hold all of them at once. You decide what gets made, make sure it lands, and prove it worked.\n\nYou'll need a sharp feel for South African sport and fan culture, and for global football and rugby, and captions and replies that sound like a person, in a South African voice. Experience on licensed sport, retail or fan-culture accounts, paid media literacy (Meta Ads Manager, TikTok Ads, UTMs and attribution) and hands-on time with scheduling, social listening tools and Asana are a bonus.",
+      "responsibilities": [
+        "Own a social strategy per account under one Old School plan: audience, purpose, platforms, content pillars and personas",
+        "Build the social calendar at least three months out, and turn it into a weekly posting plan per account, locked by Friday",
+        "Write clear briefs for design, video, photo, EGC and UGC in Asana, after checking the format works on the platform",
+        "Schedule and publish across every account, and quality-check every post before it goes live",
+        "Know each licensed partner's rules and route content through the right approver before it posts",
+        "Build and run the creator programme: roster, seeding, gifting, briefs, usage rights, disclosure and results",
+        "Own the reply strategy and social listening across brands, and flag sentiment risks early",
+        "Build the playbook for matchdays, derbies, kit drops and final whistles, and lead the response when something goes wrong",
+        "Treat every platform as a search engine: build keywords into hooks, captions and on-screen text",
+        "Read every post's performance, fix drop-off with the team, and connect social to sales with UTMs and store data",
+        "Report weekly per account, monthly in depth, and after every major campaign",
+        "Work with the paid team so organic and paid learnings feed each other"
+      ],
+      "minQualification": "matric",
+      "minYearsExperience": 4,
+      "skills": [
+        "Social media strategy",
+        "Social media management",
+        "Content creation",
+        "Briefing",
+        "Copywriting",
+        "Social media analytics",
+        "Meta Business Suite",
+        "Instagram",
+        "TikTok",
+        "YouTube",
+        "Influencer marketing",
+        "Social listening"
+      ],
+      "mustHaves": [
+        "I have at least 2 years' experience owning social strategy for a brand, retailer or agency client",
+        "I've run several social accounts at once, each with its own audience and approval process",
+        "I've run creator or influencer programmes: seeding, briefing, usage rights and disclosure"
+      ],
+      "weights": {
+        "qualification": 5,
+        "experience": 35,
+        "skills": 40,
+        "location": 10,
+        "availability": 10
+      }
+    },
+    {
+      "title": "E-Commerce Coordinator",
+      "location": {
+        "label": "Brackengate, Cape Town",
+        "lat": -33.8667,
+        "lng": 18.6833
+      },
+      "workplace": "on_site",
+      "employmentType": "full_time",
+      "description": "The E-Commerce Coordinator supports the day-to-day running of the Old School Group's Shopify Plus estate, across Old School, Springbok Retail, Locker Room, Liverpool FC RSA and Orlando Pirates.\n\nThis role keeps our stores accurate and launch-ready, from loading products and setting up promotions to checking pages before they go live and helping our stores with POS queries. The ideal candidate has solid Shopify experience, loves detail, and wants to grow within a busy e-commerce team.\n\nYou'll need to be comfortable with reasonably complex metafield and metaobject set-ups, and with Excel or Google Sheets. Basic HTML or Liquid, Shopify POS and retail experience are a bonus.",
+      "responsibilities": [
+        "Load and update products, collections, variants and images across all five Shopify Plus stores",
+        "Run CSV bulk imports and edits, and check pricing, stock and product data are accurate",
+        "Keep on-site merchandising, collection sorting and navigation up to date",
+        "Coordinate product and campaign launches so every page, banner and collection is ready on time",
+        "Set up discount codes, automatic promotions and gift cards to spec, including usage limits",
+        "Make theme changes in the Shopify theme editor, with light Liquid, HTML and CSS edits",
+        "Configure and support Shopify Plus features: Markets, Checkout Extensibility, Shopify Flow and Launchpad",
+        "Maintain apps and integrations (ERP, loyalty, reviews, email, search), and log and escalate issues early",
+        "Run QA checks on pages, links, checkout and mobile before and after go-live",
+        "Help the Retail team with Shopify POS queries, staff setup and pricing checks",
+        "Track order and stock sync issues and follow them up with DC Ops and Customer Care",
+        "Pull weekly Shopify sales and campaign reports, and keep SEO basics, process documents and launch checklists up to date"
+      ],
+      "minQualification": "matric",
+      "minYearsExperience": 2,
+      "skills": [
+        "Shopify",
+        "Microsoft Excel",
+        "Attention to detail",
+        "Organisation",
+        "SEO",
+        "HTML and CSS",
+        "Liquid",
+        "Communication"
+      ],
+      "mustHaves": [
+        "I have at least 2 years' hands-on experience in Shopify or Shopify Plus",
+        "I'm confident in the Shopify admin: products, collections, discounts, gift cards and the theme editor",
+        "I've loaded and updated products in bulk using CSV files"
+      ],
+      "weights": {
+        "qualification": 5,
+        "experience": 30,
+        "skills": 40,
+        "location": 15,
+        "availability": 10
+      }
+    },
+    {
+      "title": "Graduate Customer Experience Intern (2 Positions, Fixed-Term)",
+      "location": {
+        "label": "Brackengate, Cape Town",
+        "lat": -33.8667,
+        "lng": 18.6833
+      },
+      "workplace": "on_site",
+      "employmentType": "contract",
+      "startDate": "2026-11-09",
+      "description": "We're hiring two recent graduates as Customer Experience Interns on a fixed-term contract from 9 November 2026 to 30 January 2027, our busiest season of the year. The role is built for graduates in the gap between finishing their studies and starting the new year, who want real, high-impact work experience on their CV.\n\nYou'll be the voice of our brand across email and social media DMs. Every reply you send carries our brand's reputation, so we need people who are committed for the full contract and take the role seriously from day one: reliable attendance, professional conduct, and the same care on your last day as on your first.\n\nYou'll report to the Customer Service Manager and work from our Brackengate office five days a week. Experience handling customer queries over email or social media, or working through a peak retail period such as Black Friday, is a bonus.",
+      "responsibilities": [
+        "Answer customer emails about orders, deliveries, returns and products, clearly and accurately, within our response-time targets",
+        "Handle direct messages across our social channels in our brand's tone, resolving queries in real time where possible",
+        "Check stock across stores and online, and guide customers to the best way to get what they need",
+        "Own each query until the customer has an answer, and escalate cases outside your scope to the right team",
+        "Apply our returns, exchange and service policies with good judgement",
+        "Log interactions and flag recurring issues or product questions so the team can improve"
+      ],
+      "minQualification": "diploma",
+      "minYearsExperience": 0,
+      "skills": [
+        "Customer service",
+        "Communication",
+        "Attention to detail",
+        "Organisation"
+      ],
+      "mustHaves": [
+        "I completed a degree or diploma in 2025 or 2026",
+        "I have customer-facing work experience (part-time, vacation, student or retail jobs all count)",
+        "I can work the full contract from 9 November 2026 to 30 January 2027, including the festive season",
+        "I can work from the Brackengate office five days a week"
+      ],
+      "weights": {
+        "qualification": 15,
+        "experience": 10,
+        "skills": 30,
+        "location": 20,
+        "availability": 25
+      }
+    },
+    {
+      "title": "Software Developer",
+      "location": {
+        "label": "Brackengate, Cape Town",
+        "lat": -33.8667,
+        "lng": 18.6833
+      },
+      "workplace": "hybrid",
+      "employmentType": "full_time",
+      "description": "Old School is growing fast, and some of our best people spend hours every week on copy-paste, reconciliations and reports that a well-written script could finish before the kettle boils. This role exists to give them that time back. You'll turn hours of manual admin into automations that run themselves, starting with our finance team and working your way across the business.\n\nWe're looking for someone with exceptional raw ability: a top academic performer who has already built things on their own just because they wanted to. We'll teach you the domain and our stack. You bring the curiosity, the code and the care. Retail, logistics or apparel experience isn't needed.\n\nYou'll report to the CTO and work from our Brackengate office three days a week and from home for the rest. You'll use AI coding tools such as Claude Code or Cursor daily and check what they produce, and handle passwords, access and financial data with care. SQL or pandas, extracting data from slips and invoices with OCR or AI, and some data science or machine learning experience are a bonus.",
+      "responsibilities": [
+        "Automate manual, repetitive processes such as reconciliations, reporting and admin, starting with the finance team",
+        "Build Python scripts, n8n workflows and scheduled jobs that run reliably every day",
+        "Build small internal tools and data pipelines that pull, clean and match data across our systems",
+        "Extract data from slips and invoices, and sync data between systems daily",
+        "Learn each process from the people who do it today, then automate it"
+      ],
+      "minQualification": "degree",
+      "fieldKeywords": [
+        "computer science",
+        "computer engineering",
+        "software engineering",
+        "information systems",
+        "data science",
+        "actuarial",
+        "mathematics",
+        "statistics",
+        "informatics"
+      ],
+      "minYearsExperience": 0,
+      "skills": [
+        "Python",
+        "Git",
+        "APIs",
+        "Workflow automation",
+        "AI coding tools",
+        "Microsoft Excel"
+      ],
+      "mustHaves": [
+        "I write working Python scripts that move, clean and match data across CSV, Excel and JSON files",
+        "I've connected systems through APIs: reading the documentation, authenticating and handling errors",
+        "I've built things on my own outside of coursework",
+        "I use AI coding tools such as Claude Code or Cursor regularly"
+      ],
+      "weights": {
+        "qualification": 30,
+        "experience": 5,
+        "skills": 45,
+        "location": 10,
+        "availability": 10
+      }
+    },
+    {
+      "title": "Video Editor & Post-Production Specialist",
+      "location": {
+        "label": "Cape Town"
+      },
+      "workplace": "hybrid",
+      "employmentType": "full_time",
+      "description": "Old School is a sport and creative house based in Cape Town. We make campaigns, films and retail experiences for some of the biggest names in sport: Liverpool FC, Orlando Pirates, Kaizer Chiefs, the Springboks, Bafana Bafana, Chelsea, Real Madrid, Man City, Tottenham and AB de Villiers. The work moves fast and it ships to millions of supporters.\n\nWe need an editor who can carry a story from the raw card to the final export, and who treats the edit suite as a creative seat, not a technical one. One week it's a hero film for a kit drop; the next it's a set of paid ads, a social package for derby weekend and screens for a retail store.\n\nYou'll report to the Creative Director and work alongside our Creative Lead for photo and video, two days a week in the office and the rest remotely. This seat suits a strong mid-weight ready to step up, or a senior editor who wants real ownership: you'll set the post-production standard for the studio and shape the pipeline your way.\n\nA portfolio is essential (a website, Instagram, YouTube links or a cloud folder); applications without one won't be reviewed. Motion design beyond templates, sport content on your reel, and experience cutting for retail or large-format screens are a bonus.",
+      "responsibilities": [
+        "Cut TVCs and hero brand films from offline to final delivery",
+        "Build online ad edits with platform-specific cutdowns, aspect ratios and versioning",
+        "Edit social-first content: Reels, TikTok, YouTube and match-day packages",
+        "Produce content for retail store screens and in-store environments",
+        "Handle colour grading, sound mix and sweetening, motion graphics and titling to a finishing standard",
+        "Join shoots as needed and act as DIT: verified backups, on-set colour and LUTs, dailies, selects and rough assemblies",
+        "Own media management from set to archive: ingest, organisation, naming, proxies and delivery specs",
+        "Run several edits across partners at once, keeping every output on-brand and licence-compliant"
+      ],
+      "minQualification": "none",
+      "minYearsExperience": 5,
+      "skills": [
+        "Video editing",
+        "Adobe Premiere Pro",
+        "Adobe After Effects",
+        "DaVinci Resolve",
+        "Colour grading",
+        "Sound design",
+        "Motion graphics",
+        "AI video tools",
+        "Driver's licence"
+      ],
+      "mustHaves": [
+        "I have at least 5 years' experience editing professionally",
+        "I use AI video tools in my daily workflow (generative video, AI rough cuts, transcription editing, upscaling, reframing)",
+        "I can mix dialogue, score and effects to a broadcast-ready standard myself",
+        "I have DIT experience: data wrangling, checksum backups, LUTs and dailies",
+        "I have a portfolio I can share",
+        "I have a driver's licence and can travel to shoots"
+      ],
+      "weights": {
+        "qualification": 0,
+        "experience": 35,
+        "skills": 45,
+        "location": 10,
+        "availability": 10
+      }
+    },
+    {
+      "title": "Ecommerce Growth Strategist",
+      "location": {
+        "label": "Brackengate, Cape Town",
+        "lat": -33.8667,
+        "lng": 18.6833
+      },
+      "workplace": "on_site",
+      "employmentType": "full_time",
+      "description": "The Ecommerce Growth Strategist is responsible for the strategy behind the full ecommerce funnel on our global website, from paid media through on-site conversion to post-purchase and retention.\n\nThis role needs a strategic thinker with a deep understanding of consumer psychology, sharp creative instincts, and the analytical rigour to know what's working and why. You'll brief and direct execution through our creative agency.\n\nWe're looking for an ownership mentality: confident making calculated decisions, taking action without hand-holding, and learning quickly from mistakes, and equally comfortable in performance data and creative direction.",
+      "responsibilities": [
+        "Own paid media across Meta, Google and TikTok end to end: strategy, account structure, budget and day-to-day running",
+        "Set funnel logic, bidding strategy and creative rotation, and act on CAC, ROAS and AOV",
+        "Decide which angles, formats and hooks to test, and write insight-led briefs for the creative agency",
+        "Run a structured testing programme that validates or kills new angles fast",
+        "Own the CRO roadmap pre- and post-purchase, run A/B tests, and work with the ecom team on larger site changes",
+        "Set strategy for email flows and campaigns across acquisition, conversion and retention",
+        "Build a working model of what drives purchase, hesitation and repeat behaviour, and map the full customer journey",
+        "Connect ad, site and retention data into one view of funnel health, and report clear takeaways"
+      ],
+      "minQualification": "none",
+      "minYearsExperience": 3,
+      "skills": [
+        "Paid media",
+        "Meta Business Suite",
+        "Google Ads",
+        "TikTok Ads",
+        "CRO",
+        "A/B testing",
+        "Email marketing",
+        "Briefing",
+        "Data analysis",
+        "Communication"
+      ],
+      "mustHaves": [
+        "I've run paid media strategy across Meta, Google and TikTok",
+        "I can show CRO results, before and after purchase",
+        "I've used an email or lifecycle marketing platform such as Klaviyo"
+      ],
+      "weights": {
+        "qualification": 0,
+        "experience": 35,
+        "skills": 45,
+        "location": 10,
+        "availability": 10
+      }
+    },
+    {
+      "title": "Software Engineer: Internal Systems & AI Integrations",
+      "location": {
+        "label": "Brackengate, Cape Town",
+        "lat": -33.8667,
+        "lng": 18.6833
+      },
+      "workplace": "hybrid",
+      "employmentType": "full_time",
+      "description": "Old School is scaling fast, and our tech stack needs to scale with it. This role exists to design, build and run the internal systems and integrations that keep the business moving, and to do it the modern way: working alongside AI coding agents, not just alongside other humans. You'll make sure our tools talk to each other, our workflows are automated, and our engineering ships smart, secure, production-ready code.\n\nYou'll report to the CTO and work from our Brackengate office two days a week and from home for the rest, in a small, high-trust tech team.\n\nA formal qualification in Computer Science, Computer Engineering, Software Engineering or Information Systems is required: a four-year degree, or a three-year degree with solid professional experience. Experience with REST APIs, building MCP tools or servers, n8n, production cloud architecture on AWS or Azure, and Terraform is a bonus.",
+      "responsibilities": [
+        "Design, deploy and maintain internal cloud-based tools that support operations across the business",
+        "Build and manage integrations between business systems, including n8n workflows, custom connectors and MCP tools for AI agents",
+        "Direct AI coding agents to deliver software, and review and stand behind everything they produce",
+        "Own the security of what you build: authentication, authorisation and secrets management",
+        "Turn business needs into reliable, well-structured software with the rest of the tech team"
+      ],
+      "minQualification": "degree",
+      "fieldKeywords": [
+        "computer science",
+        "computer engineering",
+        "software engineering",
+        "information systems"
+      ],
+      "minYearsExperience": 1,
+      "skills": [
+        "AI coding tools",
+        "Git",
+        "Docker",
+        "AWS",
+        "Azure",
+        "Command line",
+        "Computer networking",
+        "APIs"
+      ],
+      "mustHaves": [
+        "I have a degree in Computer Science, Computer Engineering, Software Engineering or Information Systems",
+        "I've worked in a professional software environment",
+        "I use AI coding agents such as Claude Code or Cursor to ship code, not just for autocomplete",
+        "I'm comfortable reading, reviewing, debugging and testing code I didn't write"
+      ],
+      "weights": {
+        "qualification": 25,
+        "experience": 25,
+        "skills": 40,
+        "location": 5,
+        "availability": 5
+      }
     }
   ]
 }

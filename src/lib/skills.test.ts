@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalSkill, hasSkill, normaliseSkills, sameSkill, searchSkills, SKILL_NAMES } from "./skills";
+import { canonicalSkill, hasSkill, normaliseSkills, sameSkill, searchSkills, skillKey, SKILL_CATALOGUE, SKILL_NAMES } from "./skills";
 import { DEFAULT_WEIGHTS, scoreMatch } from "./matching";
 
 describe("standard skill names", () => {
@@ -26,6 +26,24 @@ describe("standard skill names", () => {
 
   it("de-duplicates different wordings of one skill", () => {
     expect(normaliseSkills(["Excel", "MS Excel", "spreadsheets", "Outlook", "", "outlook"])).toEqual(["Microsoft Excel", "Outlook"]);
+  });
+
+  it("never uses one wording for two different skills", () => {
+    const owner = new Map<string, string>();
+    const clashes: string[] = [];
+    for (const def of SKILL_CATALOGUE) {
+      for (const k of [def.name, ...(def.aliases ?? [])].map(skillKey)) {
+        if (owner.has(k) && owner.get(k) !== def.name) clashes.push(`${k}: ${owner.get(k)} / ${def.name}`);
+        owner.set(k, def.name);
+      }
+    }
+    expect(clashes).toEqual([]);
+  });
+
+  it("only points tools and suites at skills that exist", () => {
+    const names = new Set(SKILL_NAMES);
+    const missing = SKILL_CATALOGUE.flatMap((d) => [...(d.covers ?? []), ...(d.counts ?? [])]).filter((n) => !names.has(n));
+    expect(missing).toEqual([]);
   });
 
   it("has no commas in any standard name, since skills are stored comma-separated", () => {
@@ -59,6 +77,15 @@ describe("matching skills", () => {
     expect(hasSkill(["HubSpot"], "CRM")).toBe(true);
     expect(hasSkill(["CRM systems"], "HubSpot")).toBe(false);
     expect(canonicalSkill("prospecting")).toBe("Lead generation");
+  });
+
+  it("counts specific tools towards the general skill", () => {
+    expect(hasSkill(["n8n"], "Workflow automation")).toBe(true);
+    expect(hasSkill(["Klaviyo"], "Email marketing")).toBe(true);
+    expect(hasSkill(["Shopify Plus"], "Shopify")).toBe(true);
+    expect(hasSkill(["Claude Code"], "AI coding tools")).toBe(true);
+    expect(hasSkill(["Google Ads"], "Paid media")).toBe(true);
+    expect(canonicalSkill("color grading")).toBe("Colour grading");
   });
 
   it("meets a request for a suite with two of its programs", () => {

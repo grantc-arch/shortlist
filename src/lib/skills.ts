@@ -14,7 +14,7 @@ interface SkillDef {
   counts?: string[];
 }
 
-const CATALOGUE: SkillDef[] = [
+export const SKILL_CATALOGUE: SkillDef[] = [
   // Office software
   { name: "Microsoft Excel", aliases: ["excel", "spreadsheets", "spreadsheet", "excel spreadsheets", "advanced excel"] },
   { name: "Microsoft Word", aliases: ["word", "word processing"] },
@@ -30,6 +30,27 @@ const CATALOGUE: SkillDef[] = [
     name: "Google Workspace",
     aliases: ["g suite", "gsuite", "google suite", "google docs", "google sheets", "google drive", "gmail", "google calendar", "google slides"],
   },
+  { name: "AI coding tools", aliases: ["claude code", "cursor", "github copilot", "ai coding agents", "ai assisted coding", "ai coding"], counts: ["AI tools"] },
+  { name: "Python", aliases: ["python 3", "python scripting"] },
+  { name: "pandas", aliases: ["python pandas", "data analysis in python"] },
+  { name: "SQL", aliases: ["mysql", "postgresql", "postgres", "sql server", "databases"] },
+  { name: "JavaScript", aliases: ["js", "node", "node js", "nodejs"] },
+  { name: "TypeScript", aliases: ["ts"] },
+  { name: "Git", aliases: ["github", "gitlab", "version control", "bitbucket"] },
+  { name: "APIs", aliases: ["api", "rest apis", "rest api", "api integration", "api integrations", "restful apis"] },
+  { name: "Workflow automation", aliases: ["automation", "process automation", "business process automation", "cron", "cron jobs", "scheduled jobs"] },
+  { name: "n8n", counts: ["Workflow automation"] },
+  { name: "Zapier", counts: ["Workflow automation"] },
+  { name: "Make.com", aliases: ["make", "integromat"], counts: ["Workflow automation"] },
+  { name: "Docker", aliases: ["containers", "docker compose"] },
+  { name: "AWS", aliases: ["amazon web services"] },
+  { name: "Azure", aliases: ["microsoft azure"] },
+  { name: "Terraform", aliases: ["infrastructure as code", "iac"] },
+  { name: "Command line", aliases: ["linux", "terminal", "bash", "shell", "cli", "unix"] },
+  // "Networking" on its own could mean people or computers, so it's left to match loosely.
+  { name: "Computer networking", aliases: ["tcp ip", "network fundamentals", "network administration", "tcp ip dns"] },
+  { name: "MCP", aliases: ["model context protocol", "mcp servers", "mcp tools"] },
+  { name: "Data analysis", aliases: ["data analytics", "analysing data", "analyzing data", "analytics"] },
   { name: "AI tools", aliases: ["ai", "chatgpt", "chat gpt", "claude", "gemini", "copilot", "microsoft copilot", "generative ai", "ai tools chatgpt claude"] },
 
   // Admin
@@ -56,7 +77,7 @@ const CATALOGUE: SkillDef[] = [
   { name: "Lead generation", aliases: ["prospecting", "outbound sales", "lead gen", "finding new clients", "new business"] },
   { name: "Cold calling", aliases: ["outbound calling", "telesales", "outbound calls"] },
   { name: "Account management", aliases: ["key account management", "client management", "managing accounts", "account manager"] },
-  { name: "Relationship building", aliases: ["building relationships", "relationship management", "networking", "client relationships"] },
+  { name: "Relationship building", aliases: ["building relationships", "relationship management", "client relationships"] },
   { name: "Negotiation", aliases: ["negotiating", "negotiation skills", "closing deals", "closing"] },
   { name: "Pipeline management", aliases: ["sales pipeline", "managing a pipeline", "pipeline"] },
   { name: "Quoting", aliases: ["quotes", "quotations", "preparing quotes", "quoting workflows"] },
@@ -83,18 +104,24 @@ const CATALOGUE: SkillDef[] = [
   { name: "TikTok", aliases: ["tik tok"] },
   { name: "Facebook" },
   { name: "LinkedIn", aliases: ["linked in"] },
-  { name: "Meta Business Suite", aliases: ["meta business", "facebook business suite", "meta ads", "facebook ads", "meta business manager"] },
+  { name: "Meta Business Suite", aliases: ["meta business", "facebook business suite", "meta ads", "facebook ads", "meta business manager", "meta ads manager", "ads manager", "facebook ads manager"], counts: ["Paid media"] },
   { name: "Canva" },
   { name: "Graphic design", aliases: ["design", "graphic designer"] },
   { name: "Adobe Photoshop", aliases: ["photoshop"] },
   { name: "Adobe Illustrator", aliases: ["illustrator"] },
   { name: "Adobe InDesign", aliases: ["indesign"] },
   { name: "Adobe Premiere Pro", aliases: ["premiere", "premiere pro"] },
+  { name: "Adobe After Effects", aliases: ["after effects", "ae"] },
   {
     name: "Adobe Creative Cloud",
     aliases: ["adobe", "adobe creative suite", "adobe suite", "creative cloud", "adobe cc"],
-    covers: ["Adobe Photoshop", "Adobe Illustrator", "Adobe InDesign", "Adobe Premiere Pro"],
+    covers: ["Adobe Photoshop", "Adobe Illustrator", "Adobe InDesign", "Adobe Premiere Pro", "Adobe After Effects"],
   },
+  { name: "DaVinci Resolve", aliases: ["davinci", "resolve", "da vinci resolve"] },
+  { name: "Colour grading", aliases: ["color grading", "grading", "colour correction", "color correction"] },
+  { name: "Sound design", aliases: ["audio mixing", "sound mixing", "audio editing", "sound editing", "audio post production"] },
+  { name: "Motion graphics", aliases: ["motion design", "animation", "2d animation"] },
+  { name: "AI video tools", aliases: ["ai video", "generative video", "runway", "sora", "veo", "ai video editing"] },
   { name: "Photography", aliases: ["photos", "product photography", "photographer"] },
   { name: "Video editing", aliases: ["editing videos", "capcut", "video production", "videography"] },
   { name: "Market research", aliases: ["research", "competitor research", "consumer research", "marketing research"] },
@@ -103,7 +130,24 @@ const CATALOGUE: SkillDef[] = [
   { name: "Google Analytics", aliases: ["ga4", "web analytics"] },
   { name: "Email marketing", aliases: ["mailchimp", "newsletters", "email campaigns"] },
   { name: "WordPress", aliases: ["word press"] },
-  { name: "Shopify" },
+  { name: "Shopify", aliases: ["shopify admin"] },
+  { name: "Shopify Plus", counts: ["Shopify"] },
+  { name: "Shopify POS", counts: ["Shopify"] },
+  { name: "Liquid", aliases: ["shopify liquid", "liquid templating"] },
+  { name: "HTML and CSS", aliases: ["html", "css", "html css", "html5", "css3"] },
+  { name: "Paid media", aliases: ["performance marketing", "paid social", "ppc", "paid advertising", "paid ads", "media buying"] },
+  { name: "Google Ads", aliases: ["adwords", "google adwords", "google ads manager"], counts: ["Paid media"] },
+  { name: "TikTok Ads", aliases: ["tiktok ads manager", "tiktok advertising"], counts: ["Paid media"] },
+  { name: "CRO", aliases: ["conversion rate optimisation", "conversion rate optimization", "conversion optimisation"] },
+  { name: "A/B testing", aliases: ["ab testing", "a b testing", "split testing"] },
+  { name: "Klaviyo", counts: ["Email marketing"] },
+  { name: "Briefing", aliases: ["writing briefs", "creative briefs", "creative briefing", "brief writing"] },
+  { name: "Social media strategy", aliases: ["social strategy", "content strategy", "social media strategist"] },
+  { name: "Social media analytics", aliases: ["social analytics", "tiktok studio", "youtube studio", "instagram insights", "meta insights"] },
+  { name: "Influencer marketing", aliases: ["creator marketing", "influencer management", "creator programme", "creator program", "influencers"] },
+  { name: "Social listening" },
+  { name: "YouTube", aliases: ["youtube shorts"] },
+  { name: "Asana" },
 
   // Hospitality
   { name: "Barista", aliases: ["coffee making", "barista skills"] },
@@ -138,12 +182,12 @@ export function skillKey(text: string): string {
 }
 
 const BY_KEY = new Map<string, SkillDef>();
-for (const def of CATALOGUE) {
+for (const def of SKILL_CATALOGUE) {
   for (const k of [def.name, ...(def.aliases ?? [])]) BY_KEY.set(skillKey(k), def);
 }
-const BY_NAME = new Map(CATALOGUE.map((d) => [d.name, d]));
+const BY_NAME = new Map(SKILL_CATALOGUE.map((d) => [d.name, d]));
 
-export const SKILL_NAMES = CATALOGUE.map((d) => d.name);
+export const SKILL_NAMES = SKILL_CATALOGUE.map((d) => d.name);
 
 export const isKnownSkill = (name: string) => BY_NAME.has(name);
 
@@ -208,7 +252,7 @@ export function searchSkills(query: string, exclude: string[] = [], limit = 8): 
   if (!q) return [];
   const skip = new Set(exclude.map((e) => canonicalSkill(e)));
   const scored: { name: string; rank: number }[] = [];
-  for (const def of CATALOGUE) {
+  for (const def of SKILL_CATALOGUE) {
     if (skip.has(def.name)) continue;
     const name = skillKey(def.name);
     const aliases = (def.aliases ?? []).map(skillKey);
