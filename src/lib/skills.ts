@@ -10,6 +10,8 @@ interface SkillDef {
   aliases?: string[];
   /** A suite that covers other skills, e.g. Microsoft Office covers Excel. */
   covers?: string[];
+  /** A specific tool that also counts as a general skill, e.g. HubSpot counts as CRM. */
+  counts?: string[];
 }
 
 const CATALOGUE: SkillDef[] = [
@@ -50,6 +52,18 @@ const CATALOGUE: SkillDef[] = [
   { name: "Customer service", aliases: ["client service", "customer care", "customer support", "client relations", "customer relations", "client liaison"] },
   { name: "Sales", aliases: ["selling", "retail sales", "sales experience", "b2b sales"] },
   { name: "Cash handling", aliases: ["cashier", "till operation", "point of sale", "pos", "till"] },
+  { name: "Business development", aliases: ["biz dev", "bd", "new business development", "growing new business"] },
+  { name: "Lead generation", aliases: ["prospecting", "outbound sales", "lead gen", "finding new clients", "new business"] },
+  { name: "Cold calling", aliases: ["outbound calling", "telesales", "outbound calls"] },
+  { name: "Account management", aliases: ["key account management", "client management", "managing accounts", "account manager"] },
+  { name: "Relationship building", aliases: ["building relationships", "relationship management", "networking", "client relationships"] },
+  { name: "Negotiation", aliases: ["negotiating", "negotiation skills", "closing deals", "closing"] },
+  { name: "Pipeline management", aliases: ["sales pipeline", "managing a pipeline", "pipeline"] },
+  { name: "Quoting", aliases: ["quotes", "quotations", "preparing quotes", "quoting workflows"] },
+  { name: "CRM", aliases: ["crm systems", "customer relationship management", "crm software"] },
+  { name: "HubSpot", aliases: ["hub spot", "hubspot crm"], counts: ["CRM"] },
+  { name: "Salesforce", aliases: ["sales force"], counts: ["CRM"] },
+  { name: "Cin7", aliases: ["cin 7", "cin7 core", "dear inventory"] },
   { name: "Stock control", aliases: ["inventory", "inventory management", "stock management", "stock taking", "stocktaking"] },
   { name: "Visual merchandising", aliases: ["merchandising"] },
 
@@ -182,7 +196,7 @@ export function hasSkill(have: string[], wanted: string): boolean {
   const target = canonicalSkill(wanted);
   const mine = normaliseSkills(have);
   if (mine.some((s) => sameSkill(s, target))) return true;
-  if (mine.some((s) => BY_NAME.get(s)?.covers?.includes(target))) return true;
+  if (mine.some((s) => BY_NAME.get(s)?.covers?.includes(target) || BY_NAME.get(s)?.counts?.includes(target))) return true;
   const covers = BY_NAME.get(target)?.covers;
   if (covers && covers.filter((c) => mine.includes(c)).length >= 2) return true;
   return false;

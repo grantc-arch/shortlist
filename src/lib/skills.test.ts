@@ -55,6 +55,12 @@ describe("matching skills", () => {
     expect(hasSkill(["MS Office"], "Canva")).toBe(false);
   });
 
+  it("counts a specific CRM as CRM experience, but not the other way round", () => {
+    expect(hasSkill(["HubSpot"], "CRM")).toBe(true);
+    expect(hasSkill(["CRM systems"], "HubSpot")).toBe(false);
+    expect(canonicalSkill("prospecting")).toBe("Lead generation");
+  });
+
   it("meets a request for a suite with two of its programs", () => {
     expect(hasSkill(["Excel", "Outlook"], "Microsoft Office")).toBe(true);
     expect(hasSkill(["Excel"], "Microsoft Office")).toBe(false);

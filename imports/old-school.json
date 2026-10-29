@@ -1,0 +1,74 @@
+{
+  "jobs": [
+    {
+      "title": "Executive Assistant (B2B / Schools)",
+      "location": { "label": "Brackengate, Cape Town", "lat": -33.8667, "lng": 18.6833 },
+      "workplace": "hybrid",
+      "employmentType": "full_time",
+      "description": "Old School B2B is a fast-paced, fast-growing division of the Old School brand, designing bespoke merchandise for more than a thousand corporate clients.\n\nWe're looking for an Executive Assistant to the two Directors of the B2B channel: someone who keeps the day running, keeps projects moving and makes the whole team faster. You'll sit at the centre of Sales, Account Management, Product and Operations, close to the clients, the projects and the decisions.\n\nYou'll report to the two Directors of the B2B channel, and work from our Brackengate office three days a week and from home for the rest. A relevant tertiary qualification is a bonus, and so is being familiar with AI tools such as Claude and ChatGPT, or keen to learn.",
+      "responsibilities": [
+        "Manage both Directors' diaries and inboxes, prepare meetings and follow up",
+        "Help Sales and Account Management onboard new clients smoothly",
+        "Organise and improve internal processes with Product, Operations and Sales, and document them as SOPs",
+        "Run special projects for clients and the team from concept to done",
+        "Arrange flights, accommodation and itineraries, and keep trackers of stays and costs",
+        "Put together client gift bags and gifting moments"
+      ],
+      "minQualification": "matric",
+      "minYearsExperience": 2,
+      "skills": [
+        "Diary management",
+        "Inbox management",
+        "Microsoft Excel",
+        "Outlook",
+        "Microsoft Teams",
+        "Travel coordination",
+        "Project coordination",
+        "Process documentation",
+        "Client onboarding"
+      ],
+      "mustHaves": [
+        "I can work from the Brackengate office three days a week",
+        "I'm fluent in Microsoft Excel, Outlook and Teams",
+        "I have at least 2 years' experience as an Executive Assistant, PA or similar role"
+      ],
+      "weights": { "qualification": 10, "experience": 30, "skills": 30, "location": 20, "availability": 10 }
+    },
+    {
+      "title": "Business Development Executive: B2B Corporate",
+      "location": { "label": "Brackengate, Cape Town", "lat": -33.8667, "lng": 18.6833 },
+      "workplace": "hybrid",
+      "employmentType": "full_time",
+      "description": "Old School B2B is a fast-paced, fast-growing division of the Old School brand, designing bespoke merchandise for more than a thousand corporate clients.\n\nWe're looking for a sharp, people-savvy Business Development Executive to help Old School grow: someone who loves connecting with people, understands how products and operations fit together, and can confidently take our offering to new clients.\n\nThe role sits where sales, product and strategy meet. You'll be front-facing: driving outbound, converting the inbound our marketing brings in, opening new relationships, and spotting opportunities that bridge our product, design and operations teams. If you thrive in a fast-moving environment, learn a business inside-out and like seeing your ideas turn into real impact, we'd like to hear from you.\n\nYou'll report to the Commercial Director: Growth, and work from our Brackengate office three days a week and from home for the rest. A relevant tertiary qualification, experience in product or the creative industries, and experience with HubSpot and Cin7 are all a bonus.",
+      "responsibilities": [
+        "Find, research and engage potential clients, and get Old School in front of the right people",
+        "Call every qualified inbound lead the same day",
+        "Qualify briefs and quote fast: fully bespoke only where there's clear scale, everything else through our existing product range",
+        "Put everyone you don't close on first contact into a structured follow-up sequence",
+        "Read buying signals, create urgency where it's real, and ask for the order",
+        "Build client relationships that go beyond a single sale",
+        "Work closely with Product, Operations and Design on what we're building and why",
+        "Feed industry trends, client challenges and competitor activity back into the product roadmap",
+        "Own your pipeline from first contact to signed deal, with the CRM as the source of truth"
+      ],
+      "minQualification": "matric",
+      "minYearsExperience": 1,
+      "skills": [
+        "Business development",
+        "Sales",
+        "Lead generation",
+        "Relationship building",
+        "Communication",
+        "Pipeline management",
+        "Quoting",
+        "CRM"
+      ],
+      "mustHaves": [
+        "I can work from the Brackengate office three days a week",
+        "I have at least 1 year's experience in sales, business development or a client-facing role",
+        "I'm comfortable working in a CRM and preparing quotes"
+      ],
+      "weights": { "qualification": 10, "experience": 25, "skills": 35, "location": 20, "availability": 10 }
+    }
+  ]
+}

@@ -139,6 +139,20 @@ The once-a-day emails (application updates, new applicants, job alerts) are sent
 - Demo accounts use `example.com` addresses, which can't receive mail, so nothing is sent to them.
 - Locally, with no `CRON_SECRET`, visit `http://localhost:3000/api/cron/daily` in `npm run dev` to run it by hand. The emails are printed in the terminal if SMTP isn't set up.
 
+## Importing jobs
+
+To post several jobs at once, for example on behalf of an employer who has sent their ads, put them in a JSON file (see [`imports/old-school.json`](imports/old-school.json) for the format) and run:
+
+```bash
+npm run jobs:import -- imports/old-school.json --employer hiring@company.co.za --dry-run   # check only
+npm run jobs:import -- imports/old-school.json --employer hiring@company.co.za
+```
+
+- The employer account must already exist. Jobs show under its company name, and its owner sees the applicants.
+- Jobs are checked against the same rules as the Post a job form, and skills are mapped to their standard names.
+- A job that account already has open with the same title is skipped, so running the same file again only posts what's new.
+- For the live site, set `DATABASE_URL` first, as for `db:migrate`.
+
 ## Tech stack
 
 - [Next.js](https://nextjs.org) (App Router, server components and server actions), TypeScript, Tailwind CSS
