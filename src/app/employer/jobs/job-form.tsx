@@ -1,13 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { saveJob } from "@/app/actions/employer";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
 import { BENEFITS, EMPLOYMENT_LABELS, QUALIFICATIONS, WORKPLACE_LABELS } from "@/lib/constants";
 import { PlaceField } from "@/components/place-input";
 import { SkillField } from "@/components/skill-picker";
 import type { Place } from "@/lib/places";
-import { CRITERIA, DEFAULT_WEIGHTS, type Weights } from "@/lib/matching";
+import { CRITERIA, DEFAULT_WEIGHTS, rebalance, toPercentages, type CriterionKey, type Weights } from "@/lib/matching";
 import type { Job } from "@/db/schema";
 
 const WEIGHT_HELP: Record<keyof Weights, string> = {
@@ -20,8 +20,8 @@ const WEIGHT_HELP: Record<keyof Weights, string> = {
 
 export function JobForm({ job, defaultPlace }: { job?: Job; defaultPlace: Place }) {
   const [state, action] = useActionState(saveJob, undefined);
-  const [weights, setWeights] = useState<Weights>(job?.weights ?? DEFAULT_WEIGHTS);
-  const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
+  // Shown as whole percentages; jobs saved with the old 0-50 sliders are converted.
+  const [weights, setWeights] = useState<Weights>(() => toPercentages(job?.weights ?? DEFAULT_WEIGHTS));
 
   return (
     <ActionForm action={action} className="mt-8 space-y-8">
@@ -127,41 +127,22 @@ export function JobForm({ job, defaultPlace }: { job?: Job; defaultPlace: Place 
         </Field>
       </Section>
 
-      <Section title="How to rank applicants" intro="Decide what matters most for this role. The bar shows how the 100 points are split.">
+      <Section
+        title="How to rank applicants"
+        intro="Decide what matters most for this role, out of 100%. Changing one criterion shares the difference between the others, so the total always stays at 100%."
+      >
         <div className="flex h-4 w-full gap-[3px]" aria-hidden>
           {CRITERIA.filter((c) => weights[c.key] > 0).map((c) => (
             <div
               key={c.key}
               className="rounded-[2px] transition-[flex-basis] duration-200"
-              style={{ flexBasis: `${(weights[c.key] / totalWeight) * 100}%`, background: `var(--fit-${c.key})` }}
+              style={{ flexBasis: `${weights[c.key]}%`, background: `var(--fit-${c.key})` }}
             />
           ))}
         </div>
         <ul className="space-y-4">
           {CRITERIA.map(({ key, label }) => (
-            <li key={key} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 sm:grid-cols-[12rem_1fr_3.5rem]">
-              <label htmlFor={`w_${key}`} className="flex items-center gap-2 font-semibold">
-                <span className="size-2.5 rounded-[2px]" style={{ background: `var(--fit-${key})` }} />
-                {label}
-              </label>
-              <span className="num text-right text-ink-2 sm:order-last">{Math.round((weights[key] / totalWeight) * 100)}%</span>
-              <div className="col-span-2 sm:col-span-1">
-                <input
-                  id={`w_${key}`}
-                  name={`w_${key}`}
-                  type="range"
-                  min={0}
-                  max={50}
-                  step={5}
-                  value={weights[key]}
-                  onChange={(e) => setWeights((w) => ({ ...w, [key]: Number(e.target.value) }))}
-                  className="w-full"
-                  style={{ accentColor: `var(--fit-${key})` }}
-                  aria-describedby={`w_${key}_help`}
-                />
-                <p id={`w_${key}_help`} className="text-xs text-muted">{WEIGHT_HELP[key]}</p>
-              </div>
-            </li>
+            <WeightRow key={key} criterion={key} label={label} weights={weights} onChange={setWeights} />
           ))}
         </ul>
       </Section>
@@ -171,6 +152,92 @@ export function JobForm({ job, defaultPlace }: { job?: Job; defaultPlace: Place 
         <SubmitButton pending={job ? "Saving…" : "Posting…"}>{job ? "Save changes" : "Post job"}</SubmitButton>
       </div>
     </ActionForm>
+  );
+}
+
+/**
+ * One criterion: a 1%-step slider and a number box. Both rebalance from the weights as they
+ * were when the control was picked up, so typing "2" then "25" doesn't shift the others twice.
+ */
+function WeightRow({
+  criterion,
+  label,
+  weights,
+  onChange,
+}: {
+  criterion: CriterionKey;
+  label: string;
+  weights: Weights;
+  onChange: (w: Weights) => void;
+}) {
+  const base = useRef<Weights | null>(null);
+  const [typing, setTyping] = useState<string | null>(null);
+  const start = () => {
+    base.current = weights;
+  };
+  const set = (value: number) => onChange(rebalance(base.current ?? weights, criterion, value));
+  const id = `w_${criterion}`;
+  return (
+    <li className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 sm:grid-cols-[12rem_1fr_5.5rem]">
+      <label htmlFor={id} className="flex items-center gap-2 font-semibold">
+        <span className="size-2.5 rounded-[2px]" style={{ background: `var(--fit-${criterion})` }} />
+        {label}
+      </label>
+      <span className="flex items-center justify-end gap-1 sm:order-last">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={100}
+          step={1}
+          aria-label={`${label} weight, percent`}
+          className="input num w-16 px-2 py-1 text-right"
+          value={typing ?? weights[criterion]}
+          onFocus={(e) => {
+            start();
+            // Select the number so typing replaces it rather than adding digits to it.
+            e.currentTarget.select();
+          }}
+          onMouseUp={(e) => e.preventDefault()}
+          onChange={(e) => {
+            setTyping(e.target.value);
+            if (e.target.value !== "") set(Number(e.target.value));
+          }}
+          onBlur={() => {
+            setTyping(null);
+            base.current = null;
+          }}
+          onKeyDown={(e) => {
+            // Enter saves the number rather than submitting the whole job.
+            if (e.key === "Enter") {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
+          }}
+        />
+        <span className="text-ink-2">%</span>
+      </span>
+      <div className="col-span-2 sm:col-span-1">
+        <input
+          id={id}
+          name={id}
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={weights[criterion]}
+          onPointerDown={start}
+          onFocus={start}
+          onBlur={() => (base.current = null)}
+          onChange={(e) => set(Number(e.target.value))}
+          className="w-full"
+          style={{ accentColor: `var(--fit-${criterion})` }}
+          aria-describedby={`${id}_help`}
+          aria-valuetext={`${weights[criterion]}%`}
+        />
+        <p id={`${id}_help`} className="text-xs text-muted">{WEIGHT_HELP[criterion]}</p>
+      </div>
+    </li>
   );
 }
 

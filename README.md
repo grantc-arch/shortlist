@@ -14,7 +14,7 @@ A two-sided job board that scores every candidate against every job, and shows b
 
 ## How matching works
 
-Each job is scored on five criteria. The employer sets a weight for each (the weights are turned into a share of 100 points):
+Each job is scored on five criteria. The employer splits 100% between them, with a 1%-step slider or by typing a number; changing one shares the difference between the others, so the total always stays at 100%:
 
 | Criterion | How it's scored |
 | --- | --- |

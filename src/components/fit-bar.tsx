@@ -48,6 +48,9 @@ export function ScoreNumber({ total, className = "" }: { total: number; classNam
 
 /** Score + bar + per-criterion reasons. Used on job pages and applicant views. */
 export function FitBreakdown({ match, heading }: { match: MatchResult; heading?: string }) {
+  // Weights are percentages for new jobs, but older jobs may not add up to 100, so show each as a share.
+  const total = match.criteria.reduce((s, x) => s + x.weight, 0) || 1;
+  const share = (w: number) => Math.round((w / total) * 100);
   return (
     <div>
       <div className="mb-3 flex items-baseline justify-between gap-4">
@@ -61,11 +64,11 @@ export function FitBreakdown({ match, heading }: { match: MatchResult; heading?:
             <span className="mt-1.5 size-2.5 rounded-[2px]" style={{ background: `var(--fit-${c.key})` }} />
             <span>
               <span className="font-semibold">{c.label}</span>
-              <span className="text-muted"> ({c.weight}% weight)</span>
+              <span className="text-muted"> ({share(c.weight)}% weight)</span>
               <span className="block text-ink-2">{c.detail}</span>
             </span>
             <span className="num text-ink-2">
-              {Math.round(c.points)}/{Math.round((c.weight / match.criteria.reduce((s, x) => s + x.weight, 0)) * 100)}
+              {Math.round(c.points)}/{share(c.weight)}
             </span>
           </li>
         ))}

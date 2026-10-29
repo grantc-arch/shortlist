@@ -209,12 +209,43 @@ export function scoreMatch(
   return { total, criteria, mustHaves, mustHavesMet };
 }
 
-/** Weights from a form: non-negative whole numbers; falls back to defaults if all are zero. */
-export function normaliseWeights(input: Partial<Record<CriterionKey, number>>): Weights {
-  const w = Object.fromEntries(
-    CRITERIA.map(({ key }) => [key, Math.max(0, Math.round(Number(input[key]) || 0))]),
+/** Splits `total` into whole numbers in proportion to `values` (largest remainder method). */
+function apportion(values: number[], total: number): number[] {
+  const sum = values.reduce((a, b) => a + b, 0);
+  if (sum <= 0) return apportion(values.map(() => 1), total);
+  const exact = values.map((v) => (v / sum) * total);
+  const out = exact.map(Math.floor);
+  let left = total - out.reduce((a, b) => a + b, 0);
+  const order = exact.map((v, i) => ({ i, frac: v - Math.floor(v) })).sort((a, b) => b.frac - a.frac);
+  for (const { i } of order) {
+    if (left-- <= 0) break;
+    out[i]++;
+  }
+  return out;
+}
+
+/** Weights as whole percentages adding up to exactly 100, keeping their proportions. Defaults if all are zero. */
+export function toPercentages(input: Partial<Record<CriterionKey, number>>): Weights {
+  const raw = CRITERIA.map(({ key }) => Math.max(0, Number(input[key]) || 0));
+  if (raw.every((v) => v === 0)) return { ...DEFAULT_WEIGHTS };
+  const out = apportion(raw, 100);
+  return Object.fromEntries(CRITERIA.map(({ key }, i) => [key, out[i]])) as Weights;
+}
+
+/** Weights from a form, as percentages adding up to 100. */
+export const normaliseWeights = toPercentages;
+
+/**
+ * Sets one criterion to `value`% and shares what's left between the others in the
+ * proportions they had in `base` (equally, if they were all zero), so the total stays 100.
+ */
+export function rebalance(base: Weights, key: CriterionKey, value: number): Weights {
+  const v = Math.min(100, Math.max(0, Math.round(Number(value) || 0)));
+  const others = CRITERIA.map((c) => c.key).filter((k) => k !== key);
+  const shares = apportion(others.map((k) => Math.max(0, base[k])), 100 - v);
+  return Object.fromEntries(
+    CRITERIA.map(({ key: k }) => [k, k === key ? v : shares[others.indexOf(k)]]),
   ) as Weights;
-  return Object.values(w).some((v) => v > 0) ? w : { ...DEFAULT_WEIGHTS };
 }
 
 /** Splits comma- or newline-separated text into a clean, de-duplicated list. */

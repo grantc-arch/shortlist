@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_WEIGHTS,
   normaliseWeights,
+  rebalance,
   parseList,
   scoreMatch,
   skillsMatch,
@@ -123,7 +124,43 @@ describe("helpers", () => {
 
   it("falls back to default weights when all are zero", () => {
     expect(normaliseWeights({ skills: 0 })).toEqual(DEFAULT_WEIGHTS);
-    expect(normaliseWeights({ skills: 50.4, location: -3 }).skills).toBe(50);
-    expect(normaliseWeights({ skills: 50, location: -3 }).location).toBe(0);
+  });
+
+  it("turns weights into whole percentages adding up to 100", () => {
+    expect(normaliseWeights({ skills: 50.4, location: -3 })).toEqual({ qualification: 0, experience: 0, skills: 100, location: 0, availability: 0 });
+    // Old jobs saved from the 0-50 sliders keep their proportions.
+    const w = normaliseWeights({ qualification: 10, experience: 10, skills: 10, location: 0, availability: 0 });
+    expect(Object.values(w).reduce((a, b) => a + b, 0)).toBe(100);
+    expect(w).toEqual({ qualification: 34, experience: 33, skills: 33, location: 0, availability: 0 });
+  });
+});
+
+describe("rebalance", () => {
+  const sum = (w: Record<string, number>) => Object.values(w).reduce((a, b) => a + b, 0);
+
+  it("moves one criterion by 1% and keeps the total at 100", () => {
+    const w = rebalance(DEFAULT_WEIGHTS, "skills", 31);
+    expect(w.skills).toBe(31);
+    expect(sum(w)).toBe(100);
+  });
+
+  it("shares the change between the others in proportion", () => {
+    // Others were 25/20/15/10; taking skills from 30 to 50 leaves 50 for them.
+    expect(rebalance(DEFAULT_WEIGHTS, "skills", 50)).toEqual({ qualification: 18, experience: 14, skills: 50, location: 11, availability: 7 });
+  });
+
+  it("handles 0 and 100", () => {
+    expect(rebalance(DEFAULT_WEIGHTS, "skills", 100)).toEqual({ qualification: 0, experience: 0, skills: 100, location: 0, availability: 0 });
+    const back = rebalance({ qualification: 0, experience: 0, skills: 100, location: 0, availability: 0 }, "skills", 60);
+    expect(back).toEqual({ qualification: 10, experience: 10, skills: 60, location: 10, availability: 10 });
+  });
+
+  it("clamps typed values", () => {
+    expect(rebalance(DEFAULT_WEIGHTS, "location", 140).location).toBe(100);
+    expect(rebalance(DEFAULT_WEIGHTS, "location", -5).location).toBe(0);
+  });
+
+  it("always adds up to 100, whatever the starting point", () => {
+    for (let v = 0; v <= 100; v += 7) expect(sum(rebalance({ qualification: 3, experience: 0, skills: 1, location: 1, availability: 0 }, "experience", v))).toBe(100);
   });
 });
