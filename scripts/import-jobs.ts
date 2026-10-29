@@ -38,6 +38,12 @@ async function main() {
   const email = (arg("--employer") ?? data.employer ?? "").trim().toLowerCase();
   if (!email) throw new Error("Say which employer account to post under: --employer their@email.address");
 
+  // Say which database this is, since a missing DATABASE_URL quietly means the local one.
+  const target = process.env.DATABASE_URL
+    ? `the database at ${new URL(process.env.DATABASE_URL).hostname}`
+    : "the LOCAL database in .data (DATABASE_URL isn't set, so this won't touch the live site)";
+  console.log(`Using ${target}`);
+
   const user = await db.query.users.findFirst({ where: eq(schema.users.email, email) });
   if (!user) throw new Error(`There's no account for ${email}. Sign up on the site as an employer with that address first.`);
   if (user.role !== "employer") throw new Error(`${email} is a candidate account. Jobs can only be posted under an employer account.`);
@@ -110,7 +116,12 @@ async function main() {
 
 main()
   .catch((err) => {
-    console.error(err instanceof Error ? err.message : err);
+    // Database errors arrive wrapped ("Failed query: ..."); the reason is in the cause.
+    const cause = err instanceof Error && err.cause instanceof Error ? err.cause.message : null;
+    console.error(cause ? `The database refused the request: ${cause}` : err instanceof Error ? err.message : err);
+    if (cause && /column .* does not exist|relation .* does not exist/.test(cause)) {
+      console.error("This database is missing recent updates. Run npm run db:migrate against it first (with the same DATABASE_URL).");
+    }
     process.exitCode = 1;
   })
   .finally(closeDb);
