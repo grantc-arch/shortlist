@@ -130,11 +130,6 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
           </p>
         )}
 
-        {!closed && (
-          <div className="mt-4">
-            <ShareButton url={`${siteUrl()}/jobs/${job.id}`} title={job.title} company={employer.companyName} />
-          </div>
-        )}
         {applicants !== null && (
           <p className="mt-2 text-sm font-semibold text-good">
             {applicants < FIRST_APPLICANTS
@@ -309,6 +304,11 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
                 Log in
               </Link>
             </>
+          )}
+          {!closed && (
+            <div className="mt-2">
+              <ShareButton url={`${siteUrl()}/jobs/${job.id}`} title={job.title} company={employer.companyName} />
+            </div>
           )}
         </div>
         {!isOwner && (
