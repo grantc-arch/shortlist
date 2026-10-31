@@ -34,15 +34,15 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold sm:text-4xl">{employer.companyName}</h1>
-          <p className="mt-1 text-ink-2">
-            {employer.city}.{" "}
-            <Link href="/employer/profile" className="link">
-              Edit company details
-            </Link>{" "}
-            <Link href={`/companies/${employer.userId}`} className="link">
-              View your company page
-            </Link>
-          </p>
+          <p className="mt-1 text-ink-2">{employer.city}</p>
+          <ul className="mt-2 space-y-1 text-sm">
+            <li>
+              <Link href="/employer/profile" className="link">Edit company details</Link>
+            </li>
+            <li>
+              <Link href={`/companies/${employer.userId}`} className="link">View your company page</Link>
+            </li>
+          </ul>
         </div>
         <Link href="/employer/jobs/new" className="btn btn-primary">
           Post a job

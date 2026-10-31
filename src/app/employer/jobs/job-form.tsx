@@ -209,12 +209,16 @@ function WeightRow({
   const [typing, setTyping] = useState<string | null>(null);
   const id = `w_${criterion}`;
   return (
-    <li className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 sm:grid-cols-[12rem_1fr_5.5rem]">
+    <li className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 sm:grid-cols-[12rem_1fr_auto]">
       <label htmlFor={id} className="flex items-center gap-2 font-semibold">
         <span className="size-2.5 rounded-[2px]" style={{ background: `var(--fit-${criterion})` }} />
         {label}
       </label>
+      {/* Our own − and + buttons: exactly 1% per click. The browser's arrows kept counting after a click. */}
       <span className="flex items-center justify-end gap-1 sm:order-last">
+        <StepButton label={`Lower ${label} by 1%`} disabled={value <= 0} onClick={() => onChange(value - 1)}>
+          −
+        </StepButton>
         <input
           type="number"
           inputMode="numeric"
@@ -222,7 +226,7 @@ function WeightRow({
           max={100}
           step={1}
           aria-label={`${label} weight, percent`}
-          className="input num w-16 px-2 py-1 text-right"
+          className="input num no-spin w-14 px-2 py-1 text-center"
           value={typing ?? value}
           onFocus={(e) => e.currentTarget.select()}
           onMouseUp={(e) => e.preventDefault()}
@@ -242,6 +246,9 @@ function WeightRow({
             }
           }}
         />
+        <StepButton label={`Raise ${label} by 1%`} disabled={value >= 100} onClick={() => onChange(value + 1)}>
+          +
+        </StepButton>
         <span className="text-ink-2">%</span>
       </span>
       <div className="col-span-2 sm:col-span-1">
@@ -262,6 +269,30 @@ function WeightRow({
         <p id={`${id}_help`} className="text-xs text-muted">{WEIGHT_HELP[criterion]}</p>
       </div>
     </li>
+  );
+}
+
+function StepButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="grid size-8 place-items-center rounded-md border border-line text-lg leading-none text-ink-2 hover:border-ink hover:text-ink disabled:opacity-40 disabled:hover:border-line"
+    >
+      {children}
+    </button>
   );
 }
 

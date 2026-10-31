@@ -184,3 +184,8 @@ textarea.input {
 .skill-input:focus-visible {
   outline: none;
 }
+
+/* Number boxes that have their own − / + buttons: hide the browser's arrows. */
+.no-spin { appearance: textfield; -moz-appearance: textfield; }
+.no-spin::-webkit-outer-spin-button,
+.no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
