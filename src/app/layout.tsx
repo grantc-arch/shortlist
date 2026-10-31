@@ -94,9 +94,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
-        <footer className="mx-auto max-w-6xl px-4 pb-10 text-sm text-muted sm:px-6">
-          Built by Grant Cox. Applicant details are only shared with the employers you apply to. Shortlist never charges
-          candidates to apply.
+        <footer className="mx-auto flex max-w-6xl flex-col gap-2 px-4 pb-10 text-sm text-muted sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-6">
+          <p>
+            Built by Grant Cox. Applicant details are only shared with the employers you apply to. Shortlist never
+            charges candidates to apply.
+          </p>
+          <nav aria-label="Legal" className="flex shrink-0 gap-4">
+            <Link href="/privacy" className="hover:text-ink hover:underline">Privacy</Link>
+            <Link href="/terms" className="hover:text-ink hover:underline">Terms</Link>
+          </nav>
         </footer>
       </body>
     </html>

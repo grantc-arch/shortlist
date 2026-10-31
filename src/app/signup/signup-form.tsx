@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { signup } from "../actions/auth";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
@@ -69,6 +70,11 @@ export function SignupForm({ next, initialRole }: { next?: string; initialRole: 
         <input className="input" id="password" name="password" type="password" minLength={8} autoComplete="new-password" required />
         <p className="hint">At least 8 characters.</p>
       </div>
+      <p className="text-sm text-ink-2">
+        By creating an account you agree to the{" "}
+        <Link href="/terms" className="link" target="_blank">terms of use</Link> and{" "}
+        <Link href="/privacy" className="link" target="_blank">privacy policy</Link>, and confirm you're 18 or older.
+      </p>
       <FormError error={state?.error} />
       <SubmitButton pending="Creating account…" className="btn btn-primary w-full">
         Create account

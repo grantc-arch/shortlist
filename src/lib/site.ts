@@ -29,3 +29,8 @@ export function adminEmails(): string[] {
 }
 
 export const isAdmin = (email: string | null | undefined) => !!email && adminEmails().includes(email.toLowerCase());
+
+/** Where people write about privacy or the terms: CONTACT_EMAIL, else the first admin, else the address emails come from. */
+export function contactEmail(): string | null {
+  return process.env.CONTACT_EMAIL?.trim() || adminEmails()[0] || process.env.SMTP_USER?.trim() || null;
+}

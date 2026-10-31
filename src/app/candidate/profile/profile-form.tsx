@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { autofillFromCv, saveProfile } from "@/app/actions/candidate";
 import { ActionForm, FormError, SubmitButton } from "@/components/form-bits";
@@ -210,7 +211,8 @@ export function ProfileForm({
             <input type="checkbox" name="consent" defaultChecked={!!c.popiaConsentAt} required className="mt-1 size-4 accent-[var(--accent)]" />
             <span>
               I agree that Shortlist may store my details and share my profile and CV with the employers I apply to, for
-              the purpose of those applications only. I can update my profile or delete my account at any time. (POPIA)
+              the purpose of those applications only. I can update my profile or delete my account at any time. See the{" "}
+              <Link href="/privacy" className="link" target="_blank">privacy policy</Link>.
             </span>
           </label>
         </Section>

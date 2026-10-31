@@ -215,6 +215,8 @@ npm run db:reset            # delete the local database entirely and set it up a
 6. **Optional: CV auto-fill.** Add `ANTHROPIC_API_KEY` in Vercel and redeploy.
 7. **Optional: email.** Add the four `SMTP_` variables (see [Forgot password](#forgot-password)) for password resets and invitations. For the daily emails, also add `CRON_SECRET` (any long random string, generated the same way as `AUTH_SECRET`). Redeploy.
    To review reported jobs, add `ADMIN_EMAILS` with your own email address (comma-separated for more than one), sign up on the site with that address, and a **Reports** link appears in the menu.
+
+   The privacy policy (`/privacy`) and terms (`/terms`) give `CONTACT_EMAIL` as the address to write to, or, if that isn't set, the first `ADMIN_EMAILS` address, then `SMTP_USER`.
 8. **Optional: Google for Jobs**, once real employers are posting:
    1. Add `LIST_JOBS_ON_GOOGLE` = `true` in Vercel and redeploy.
    2. In [Google Search Console](https://search.google.com/search-console), add a **URL prefix** property for your site address and choose the **HTML tag** method. Copy the `content` value into a `GOOGLE_SITE_VERIFICATION` variable, redeploy, then press Verify.

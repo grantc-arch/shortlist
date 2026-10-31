@@ -10,6 +10,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages: MetadataRoute.Sitemap = [
     { url: `${base}/`, changeFrequency: "daily", priority: 1 },
     { url: `${base}/jobs`, changeFrequency: "hourly", priority: 0.9 },
+    { url: `${base}/privacy`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${base}/terms`, changeFrequency: "yearly", priority: 0.2 },
   ];
   if (!googleJobsEnabled()) return pages;
 
