@@ -51,10 +51,12 @@ export async function signup(_: FormState, form: FormData): Promise<FormState> {
   }
 
   // Jobs people sent to this address before the account existed now show on its dashboard.
+  // (Skipped quietly if the database doesn't have the job_shares table yet, so sign-up never breaks.)
   await db
     .update(schema.jobShares)
     .set({ recipientId: user.id })
-    .where(and(eq(schema.jobShares.recipientEmail, email), isNull(schema.jobShares.recipientId)));
+    .where(and(eq(schema.jobShares.recipientEmail, email), isNull(schema.jobShares.recipientId)))
+    .catch((err) => console.error("Linking shared jobs failed:", err));
 
   await startSession({ userId: user.id, role: user.role, email });
   redirect(safeNext(form.get("next")) ?? (data.role === "candidate" ? "/candidate/profile?welcome=1" : "/employer"));
