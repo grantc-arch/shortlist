@@ -36,6 +36,13 @@
       "when": 1793209270073,
       "tag": "0004_features_round_2",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793444231800,
+      "tag": "0005_job_shares",
+      "breakpoints": true
     }
   ]
 }

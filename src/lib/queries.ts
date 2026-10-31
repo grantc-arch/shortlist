@@ -5,7 +5,7 @@ import { todayInSA } from "./jobs";
 import { COMMUTE_KM, coordsFor, distanceKm } from "./places";
 import type { Job } from "@/db/schema";
 
-const { jobs, employers, candidates, applications, savedJobs, invitations, jobReports, users } = schema;
+const { jobs, employers, candidates, applications, savedJobs, invitations, jobReports, users, jobShares } = schema;
 
 // Every candidate column except the CV file itself, which is only loaded on download.
 const { cvData: _cv, ...candidateColumns } = getTableColumns(candidates);
@@ -141,6 +141,59 @@ export async function listListableCompanies() {
     .from(employers)
     .innerJoin(jobs, eq(jobs.employerId, employers.userId))
     .where(and(acceptingApplications(), eq(employers.isDemo, false)));
+}
+
+// ── Jobs shared between users ───────────────────────────────────────────────
+
+/** The name to show for someone: a candidate's name, a company's name, or the start of their email. */
+export async function displayName(userId: string): Promise<string> {
+  const [row] = await db
+    .select({ email: users.email, fullName: candidates.fullName, companyName: employers.companyName })
+    .from(users)
+    .leftJoin(candidates, eq(candidates.userId, users.id))
+    .leftJoin(employers, eq(employers.userId, users.id))
+    .where(eq(users.id, userId));
+  return row?.fullName || row?.companyName || row?.email.split("@")[0] || "Someone";
+}
+
+/** Open jobs other people have sent to this user, newest first. */
+export async function sharesForUser(userId: string) {
+  return db
+    .select({
+      share: jobShares,
+      job: jobs,
+      companyName: employers.companyName,
+      senderName: sql<string>`coalesce(${candidates.fullName}, sender_company.company_name, split_part(${users.email}, '@', 1))`,
+    })
+    .from(jobShares)
+    .innerJoin(jobs, eq(jobs.id, jobShares.jobId))
+    .innerJoin(employers, eq(employers.userId, jobs.employerId))
+    .innerJoin(users, eq(users.id, jobShares.senderId))
+    .leftJoin(candidates, eq(candidates.userId, jobShares.senderId))
+    .leftJoin(sql`${employers} as sender_company`, sql`sender_company.user_id = ${jobShares.senderId}`)
+    .where(and(eq(jobShares.recipientId, userId), acceptingApplications()))
+    .orderBy(desc(jobShares.createdAt))
+    .limit(20);
+}
+
+/** The last few addresses this user sent jobs to, for quick picking. */
+export async function recentShareRecipients(senderId: string): Promise<string[]> {
+  const rows = await db
+    .select({ email: jobShares.recipientEmail, last: sql<Date>`max(${jobShares.createdAt})` })
+    .from(jobShares)
+    .where(eq(jobShares.senderId, senderId))
+    .groupBy(jobShares.recipientEmail)
+    .orderBy(desc(sql`max(${jobShares.createdAt})`))
+    .limit(5);
+  return rows.map((r) => r.email);
+}
+
+export async function sharesSentToday(senderId: string): Promise<number> {
+  const [{ n }] = await db
+    .select({ n: count() })
+    .from(jobShares)
+    .where(and(eq(jobShares.senderId, senderId), gt(jobShares.createdAt, new Date(Date.now() - 86_400_000))));
+  return n;
 }
 
 // ── Saved jobs ──────────────────────────────────────────────────────────────

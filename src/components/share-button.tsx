@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { shareJobWithUser } from "@/app/actions/share";
+import { ActionForm, SubmitButton } from "@/components/form-bits";
 
 function ShareIcon() {
   return (
@@ -10,36 +13,89 @@ function ShareIcon() {
   );
 }
 
-/** Phones and tablets (touch, no mouse hover): touch-screen laptops still get the full menu. */
-const isHandheld = () => window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+/** Send the job to someone by email address; it also lands on their dashboard if they have an account. */
+function SendToSomeone({ jobId, recent }: { jobId: string; recent: string[] }) {
+  const [state, action] = useActionState(shareJobWithUser, undefined);
+  const listId = useId();
+  return (
+    // A new key after each successful send clears the fields for the next person.
+    <ActionForm key={state?.sentAt ?? "form"} action={action} className="space-y-2 px-3 py-3">
+      <input type="hidden" name="jobId" value={jobId} />
+      <label htmlFor={`${listId}-email`} className="block text-sm font-semibold text-ink">
+        Send to someone on Shortlist
+      </label>
+      <input
+        id={`${listId}-email`}
+        name="email"
+        type="email"
+        required
+        list={recent.length ? listId : undefined}
+        autoComplete="email"
+        placeholder="Their email address"
+        className="input py-1.5 text-sm"
+      />
+      {recent.length > 0 && (
+        <datalist id={listId}>
+          {recent.map((r) => (
+            <option key={r} value={r} />
+          ))}
+        </datalist>
+      )}
+      <textarea name="note" maxLength={300} placeholder="Add a note (optional)" className="input min-h-14 py-1.5 text-sm" />
+      {state?.error && (
+        <p role="alert" className="text-sm text-bad">
+          {state.error}
+        </p>
+      )}
+      {state?.sentTo && (
+        <p role="status" className="text-sm text-good">
+          Sent to {state.sentTo}.
+        </p>
+      )}
+      <SubmitButton className="btn btn-primary w-full py-1.5 text-sm" pending="Sending…">
+        Send
+      </SubmitButton>
+      <p className="text-xs text-muted">If they're on Shortlist it shows on their dashboard, and they get an email either way.</p>
+    </ActionForm>
+  );
+}
 
 /**
- * Share a job. Phones and tablets open their own share sheet (WhatsApp, Instagram, Messages...);
- * computers get a menu of places to share it, plus the system share window where there is one.
+ * Share a job: send it to someone on Shortlist, email it, copy the link, or post it elsewhere.
+ * Where the device has its own share menu (phones), "More options" opens it too.
  */
-export function ShareButton({ url, title, company }: { url: string; title: string; company: string }) {
+export function ShareButton({
+  url,
+  jobId,
+  title,
+  company,
+  signedIn,
+  recent = [],
+}: {
+  url: string;
+  jobId: string;
+  title: string;
+  company: string;
+  signedIn: boolean;
+  recent?: string[];
+}) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  // Clicking anywhere outside the panel closes it.
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: PointerEvent) => {
+      if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
   const text = `${title} at ${company}, on Shortlist`;
   const intro = `Thought you might like this job: ${text}`;
   const message = `${intro}. ${url}`;
   const u = encodeURIComponent(url);
   const canSystemShare = () => typeof navigator !== "undefined" && typeof navigator.share === "function";
-
-  async function systemShare() {
-    try {
-      await navigator.share({ title: text, text: intro, url });
-      return true;
-    } catch (err) {
-      // Closing the share sheet isn't a failure.
-      return err instanceof DOMException && err.name === "AbortError";
-    }
-  }
-
-  async function onShare() {
-    if (canSystemShare() && isHandheld() && (await systemShare())) return;
-    setOpen((o) => !o);
-  }
 
   async function copy() {
     try {
@@ -57,55 +113,61 @@ export function ShareButton({ url, title, company }: { url: string; title: strin
     ["LinkedIn", `https://www.linkedin.com/sharing/share-offsite/?url=${u}`],
     ["X (Twitter)", `https://x.com/intent/post?text=${encodeURIComponent(intro)}&url=${u}`],
     ["Telegram", `https://t.me/share/url?url=${u}&text=${encodeURIComponent(intro)}`],
-    ["Email", `mailto:?subject=${encodeURIComponent(`Job: ${title}`)}&body=${encodeURIComponent(message)}`],
   ];
   const item = "flex w-full items-center px-3 py-2 text-left text-sm text-ink hover:bg-sunken";
 
   return (
     <div
+      ref={box}
       className="relative"
-      // Clicking or tabbing anywhere outside the menu closes it.
+      // Tabbing out closes it. (Focus can also vanish while Send is busy; that mustn't close it.)
       onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
+        if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false);
       }}
     >
-      <button type="button" className="btn w-full" aria-expanded={open} aria-haspopup="menu" onClick={onShare}>
+      <button type="button" className="btn w-full" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <ShareIcon />
         Share this job
       </button>
       {open && (
         <div
-          role="menu"
+          role="group"
           aria-label="Share this job"
-          className="absolute inset-x-0 z-20 mt-1 overflow-hidden rounded-md border border-line bg-surface py-1 shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
+          className="absolute inset-x-0 z-20 mt-1 overflow-hidden rounded-md border border-line bg-surface shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
           onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
         >
-          <button type="button" role="menuitem" className={`${item} font-semibold`} onClick={copy}>
-            {copied ? "Link copied" : "Copy link"}
-          </button>
-          {links.map(([label, href]) => (
-            <a
-              key={label}
-              role="menuitem"
-              className={item}
-              href={href}
-              {...(href.startsWith("mailto:") ? {} : { target: "_blank", rel: "noreferrer" })}
-            >
-              {label}
-            </a>
-          ))}
-          {canSystemShare() && (
-            <button
-              type="button"
-              role="menuitem"
-              className={`${item} border-t border-line text-ink-2`}
-              onClick={async () => {
-                if (await systemShare()) setOpen(false);
-              }}
-            >
-              More options…
-            </button>
+          {signedIn ? (
+            <SendToSomeone jobId={jobId} recent={recent} />
+          ) : (
+            <p className="px-3 py-3 text-sm text-ink-2">
+              <Link href={`/login?next=/jobs/${jobId}`} className="link font-semibold">
+                Log in
+              </Link>{" "}
+              to send this job to someone on Shortlist.
+            </p>
           )}
+          <div className="border-t border-line py-1">
+            <a className={item} href={`mailto:?subject=${encodeURIComponent(`Job: ${title}`)}&body=${encodeURIComponent(message)}`}>
+              Email
+            </a>
+            <button type="button" className={item} onClick={copy}>
+              {copied ? "Link copied" : "Copy link"}
+            </button>
+            {links.map(([label, href]) => (
+              <a key={label} className={item} href={href} target="_blank" rel="noreferrer">
+                {label}
+              </a>
+            ))}
+            {canSystemShare() && (
+              <button
+                type="button"
+                className={`${item} text-ink-2`}
+                onClick={() => navigator.share({ title: text, text: intro, url }).catch(() => {})}
+              >
+                More options…
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

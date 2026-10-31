@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { endSession, getSession, hashPassword, startSession, verifyPassword } from "@/lib/auth";
@@ -49,6 +49,12 @@ export async function signup(_: FormState, form: FormData): Promise<FormState> {
     const { label, lat, lng } = location!.place;
     await db.insert(schema.employers).values({ userId: user.id, companyName: data.companyName, city: label, lat, lng });
   }
+
+  // Jobs people sent to this address before the account existed now show on its dashboard.
+  await db
+    .update(schema.jobShares)
+    .set({ recipientId: user.id })
+    .where(and(eq(schema.jobShares.recipientEmail, email), isNull(schema.jobShares.recipientId)));
 
   await startSession({ userId: user.id, role: user.role, email });
   redirect(safeNext(form.get("next")) ?? (data.role === "candidate" ? "/candidate/profile?welcome=1" : "/employer"));

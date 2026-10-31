@@ -3,6 +3,7 @@ import {
   doublePrecision,
   customType,
   date,
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -254,6 +255,26 @@ export const invitations = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("invitations_job_candidate_idx").on(t.jobId, t.candidateId)],
+);
+
+// A job one person sent to another from the Share menu. The recipient is matched to an account
+// when there is one, so it shows on their dashboard; either way they're emailed.
+export const jobShares = pgTable(
+  "job_shares",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    jobId: uuid("job_id")
+      .notNull()
+      .references(() => jobs.id, { onDelete: "cascade" }),
+    senderId: uuid("sender_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    recipientEmail: text("recipient_email").notNull(),
+    recipientId: uuid("recipient_id").references(() => users.id, { onDelete: "cascade" }),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("job_shares_recipient_idx").on(t.recipientId), index("job_shares_sender_idx").on(t.senderId, t.createdAt)],
 );
 
 export type User = typeof users.$inferSelect;

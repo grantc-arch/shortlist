@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { applicationCount, getApplication, getCandidate, getInvitation, getJob, getReport, listOpenJobs, savedJobIds } from "@/lib/queries";
+import { applicationCount, recentShareRecipients, getApplication, getCandidate, getInvitation, getJob, getReport, listOpenJobs, savedJobIds } from "@/lib/queries";
 import { BackToJobs } from "@/components/back-to-jobs";
 import { ShareButton } from "@/components/share-button";
 import type { Employer, Job } from "@/db/schema";
@@ -307,7 +307,15 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
           )}
           {!closed && (
             <div className="mt-2">
-              <ShareButton url={`${siteUrl()}/jobs/${job.id}`} title={job.title} company={employer.companyName} />
+              <ShareButton
+                url={`${siteUrl()}/jobs/${job.id}`}
+                jobId={job.id}
+                title={job.title}
+                company={employer.companyName}
+                signedIn={!!session}
+                // Empty until the live database has the job_shares table (npm run db:migrate).
+                recent={session ? await recentShareRecipients(session.userId).catch(() => []) : []}
+              />
             </div>
           )}
         </div>
