@@ -122,48 +122,6 @@ ${button(dashboardUrl, "See my applications")}`,
   return { subject, text, html };
 }
 
-// ── A job shared by another user ───────────────────────────────────────────
-
-export function jobSharedEmail(input: {
-  senderName: string;
-  jobTitle: string;
-  company: string;
-  note: string;
-  jobUrl: string;
-  /** Set when the recipient has no account: invites them to make one. */
-  signupUrl?: string;
-  /** Account holders get the usual footer; others are told why they got it. */
-  footer?: FooterLinks;
-}): RenderedEmail {
-  const { senderName, jobTitle, company, note, jobUrl, signupUrl, footer } = input;
-  const subject = `${senderName} shared a job with you: ${jobTitle}`;
-  const intro = `${senderName} thought you might like this job on Shortlist: ${jobTitle} at ${company}.`;
-  const invite = signupUrl
-    ? "Shortlist scores every job against your profile, so you can see how well you match before you apply. Creating a profile is free."
-    : null;
-  const why = footer ? null : `${senderName} entered your email address on Shortlist. You won't hear from us again unless you sign up.`;
-  const html = layout(
-    `<p>${esc(intro)}</p>
-${note ? `<blockquote style="margin:16px 0;padding:10px 14px;background:#f5f5f4;border-radius:6px;white-space:pre-line">${esc(note)}</blockquote>` : ""}
-${button(jobUrl, "View the job")}
-${invite && signupUrl ? `<p>${esc(invite)} <a href="${esc(signupUrl)}" style="color:#171717">Create a profile</a></p>` : ""}
-${why ? `<p style="color:#6b6b6b;font-size:12px">${esc(why)}</p>` : ""}`,
-    footer,
-    true,
-  );
-  const text = [
-    intro,
-    ...(note ? ["", `Their note: "${note}"`] : []),
-    "",
-    `View the job: ${jobUrl}`,
-    ...(invite && signupUrl ? ["", `${invite} ${signupUrl}`] : []),
-    "",
-    SAFETY,
-    ...(footer ? textFooter(footer) : ["", "--", why!]),
-  ].join("\n");
-  return { subject, text, html };
-}
-
 // ── New applicants (to employers, once a day) ──────────────────────────────
 
 export interface ApplicantSummary {

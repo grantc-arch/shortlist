@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { applicationsForCandidate, getCandidate, invitationsForCandidate, listOpenJobs, savedJobsFor, sharesForUser } from "@/lib/queries";
+import { applicationsForCandidate, getCandidate, invitationsForCandidate, listOpenJobs, savedJobsFor } from "@/lib/queries";
 import { scoreMatch } from "@/lib/matching";
 import { candidateForMatching, formatDate, jobForMatching, profileGaps } from "@/lib/format";
 import { STATUS_LABELS } from "@/lib/constants";
@@ -33,9 +33,6 @@ export default async function CandidateHome({ searchParams }: { searchParams: Pr
   const savedList = await savedJobsFor(session.userId);
   const savedIds = new Set(savedList.map((s) => s.job.id));
   const invitations = await invitationsForCandidate(session.userId);
-  // Jobs others sent, leaving out ones already applied for. Until the live database has the
-  // job_shares table (npm run db:migrate), this is simply empty rather than breaking the page.
-  const shared = (await sharesForUser(session.userId).catch(() => [])).filter((s) => !appliedIds.has(s.job.id));
   const recommended = (await listOpenJobs())
     .filter((r) => !appliedIds.has(r.job.id))
     .map((r) => ({ ...r, match: scoreMatch(jobForMatching(r.job), me) }))
@@ -93,41 +90,6 @@ export default async function CandidateHome({ searchParams }: { searchParams: Pr
                       <span className="text-muted"> invited you {formatDate(invitation.createdAt)}</span>
                     </p>
                     {invitation.message && <p className="mt-1 whitespace-pre-line text-sm text-ink-2">“{invitation.message}”</p>}
-                  </div>
-                  <div>
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-sm text-muted">Match</span>
-                      <ScoreNumber total={match.total} className="text-xl" />
-                    </div>
-                    <FitBar criteria={match.criteria} size="sm" />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-
-      {shared.length > 0 && (
-        <section>
-          <h2 className="text-xl font-semibold">Shared with you</h2>
-          <ul className="list mt-3 divide-y divide-line">
-            {shared.map(({ share, job, companyName, senderName }) => {
-              const match = scoreMatch(jobForMatching(job), me);
-              return (
-                <li key={share.id} className="relative grid gap-4 p-5 sm:grid-cols-[1fr_9rem] sm:items-center">
-                  <div className="min-w-0">
-                    <Link href={`/jobs/${job.id}`} className="text-lg font-semibold after:absolute after:inset-0 hover:underline">
-                      {job.title}
-                    </Link>
-                    <p className="text-ink-2">
-                      {companyName}
-                      <span className="text-muted">
-                        {" "}
-                        sent by {senderName}, {formatDate(share.createdAt)}
-                      </span>
-                    </p>
-                    {share.note && <p className="mt-1 whitespace-pre-line text-sm text-ink-2">“{share.note}”</p>}
                   </div>
                   <div>
                     <div className="flex items-baseline justify-between">

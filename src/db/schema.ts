@@ -70,6 +70,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: roleEnum("role").notNull(),
+  // The name other people use to message this account, e.g. lerato_m. Lower-case, unique.
+  username: text("username").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   // Sessions started before this moment are no longer valid (set when the password is reset).
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
@@ -257,24 +259,56 @@ export const invitations = pgTable(
   (t) => [uniqueIndex("invitations_job_candidate_idx").on(t.jobId, t.candidateId)],
 );
 
-// A job one person sent to another from the Share menu. The recipient is matched to an account
-// when there is one, so it shows on their dashboard; either way they're emailed.
-export const jobShares = pgTable(
-  "job_shares",
+// Two-person conversations. userA is always the smaller id, so each pair has one conversation.
+export const conversations = pgTable(
+  "conversations",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    jobId: uuid("job_id")
+    userA: uuid("user_a")
       .notNull()
-      .references(() => jobs.id, { onDelete: "cascade" }),
+      .references(() => users.id, { onDelete: "cascade" }),
+    userB: uuid("user_b")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("conversations_pair_idx").on(t.userA, t.userB), index("conversations_b_idx").on(t.userB)],
+);
+
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
     senderId: uuid("sender_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    recipientEmail: text("recipient_email").notNull(),
-    recipientId: uuid("recipient_id").references(() => users.id, { onDelete: "cascade" }),
-    note: text("note").notNull().default(""),
+    body: text("body").notNull().default(""),
+    // A job sent with the message, shown as a card. Kept if the job is deleted, as a plain message.
+    jobId: uuid("job_id").references(() => jobs.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    // When the other person opened the conversation after this arrived.
+    readAt: timestamp("read_at", { withTimezone: true }),
+  },
+  (t) => [index("messages_conversation_idx").on(t.conversationId, t.createdAt)],
+);
+
+// Someone who doesn't want messages from another user.
+export const blocks = pgTable(
+  "blocks",
+  {
+    blockerId: uuid("blocker_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    blockedId: uuid("blocked_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("job_shares_recipient_idx").on(t.recipientId), index("job_shares_sender_idx").on(t.senderId, t.createdAt)],
+  (t) => [primaryKey({ columns: [t.blockerId, t.blockedId] })],
 );
 
 export type User = typeof users.$inferSelect;

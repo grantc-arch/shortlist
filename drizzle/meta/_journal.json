@@ -43,6 +43,13 @@
       "when": 1793444231800,
       "tag": "0005_job_shares",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793445274670,
+      "tag": "0006_messaging",
+      "breakpoints": true
     }
   ]
 }

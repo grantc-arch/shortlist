@@ -16,6 +16,16 @@ import { closeDb, db, schema } from "../src/db";
 import type { Weights } from "../src/lib/matching";
 import { CITY_COORDS } from "../src/lib/places";
 import { normaliseSkills } from "../src/lib/skills";
+import { usernameFromName } from "../src/lib/usernames";
+
+// Usernames handed out so far in this run, so two demo people never get the same one.
+const taken = new Set<string>();
+function demoUsername(name: string) {
+  let base = usernameFromName(name);
+  for (let i = 2; taken.has(base); i++) base = `${usernameFromName(name)}_${i}`;
+  taken.add(base);
+  return base;
+}
 
 const PASSWORD = "demo-password";
 const RESET = process.argv.includes("--reset");
@@ -58,7 +68,7 @@ function demoCv(name: string, lines: string[]): Buffer {
 async function createEmployer(email: string, companyName: string, city: string, about: string, website?: string) {
   const [u] = await db
     .insert(schema.users)
-    .values({ email, passwordHash: await bcrypt.hash(PASSWORD, 10), role: "employer", createdAt: daysAgo(30) })
+    .values({ email, passwordHash: await bcrypt.hash(PASSWORD, 10), role: "employer", username: demoUsername(companyName.replace(" (demo)", "")), createdAt: daysAgo(30) })
     .returning();
   // isDemo keeps these fictional companies' jobs labelled on the site and off Google.
   await db.insert(schema.employers).values({ userId: u.id, companyName, city, about, website, isDemo: true });
@@ -74,7 +84,7 @@ async function createCandidate(c: CandidateSeed) {
   const { email, cvLines, ...profile } = c;
   const [u] = await db
     .insert(schema.users)
-    .values({ email, passwordHash: await bcrypt.hash(PASSWORD, 10), role: "candidate", createdAt: daysAgo(20) })
+    .values({ email, passwordHash: await bcrypt.hash(PASSWORD, 10), role: "candidate", username: demoUsername(c.fullName), createdAt: daysAgo(20) })
     .returning();
   await db.insert(schema.candidates).values({
     ...profile,
@@ -95,7 +105,7 @@ async function main() {
   }
   if (RESET) {
     await db.execute(
-      sql`TRUNCATE invitations, job_reports, saved_jobs, password_reset_tokens, cv_autofill_runs, applications, jobs, candidates, employers, users CASCADE`,
+      sql`TRUNCATE messages, conversations, blocks, invitations, job_reports, saved_jobs, password_reset_tokens, cv_autofill_runs, applications, jobs, candidates, employers, users CASCADE`,
     );
     console.log("Wiped all data.");
   }
@@ -483,6 +493,14 @@ async function main() {
         message: "Your mix of marketing and social media work stood out. The internship is fully remote, so Cape Town is no problem.",
         createdAt: daysAgo(1),
       });
+      // A short conversation, so Messages has something to show.
+      const [a, b] = jozi < id ? [jozi, id] : [id, jozi];
+      const [chat] = await db.insert(schema.conversations).values({ userA: a, userB: b, createdAt: daysAgo(1), lastMessageAt: daysAgo(0.9) }).returning();
+      await db.insert(schema.messages).values([
+        { conversationId: chat.id, senderId: jozi, jobId: intern.id, body: "Hi Lerato, sending you the internship we mentioned. Applications close at the end of the month.", createdAt: daysAgo(1), readAt: daysAgo(0.95) },
+        { conversationId: chat.id, senderId: id, body: "Thanks so much! I'll apply this week. Is it fine that I'm based in Cape Town?", createdAt: daysAgo(0.95), readAt: daysAgo(0.92) },
+        { conversationId: chat.id, senderId: jozi, body: "Yes, it's fully remote. We meet on video calls twice a week.", createdAt: daysAgo(0.9) },
+      ]);
     }
     // A couple of applicants for the social media role too, so it's not empty.
     if (["ruan.vdm@example.com", "megan.b@example.com"].includes(seed.email)) {

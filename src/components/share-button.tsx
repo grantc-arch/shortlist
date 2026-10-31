@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useId, useRef, useState } from "react";
-import { shareJobWithUser } from "@/app/actions/share";
-import { ActionForm, SubmitButton } from "@/components/form-bits";
+import { useEffect, useRef, useState } from "react";
+import { MessageForm } from "@/components/message-form";
 
 function ShareIcon() {
   return (
@@ -13,56 +12,9 @@ function ShareIcon() {
   );
 }
 
-/** Send the job to someone by email address; it also lands on their dashboard if they have an account. */
-function SendToSomeone({ jobId, recent }: { jobId: string; recent: string[] }) {
-  const [state, action] = useActionState(shareJobWithUser, undefined);
-  const listId = useId();
-  return (
-    // A new key after each successful send clears the fields for the next person.
-    <ActionForm key={state?.sentAt ?? "form"} action={action} className="space-y-2 px-3 py-3">
-      <input type="hidden" name="jobId" value={jobId} />
-      <label htmlFor={`${listId}-email`} className="block text-sm font-semibold text-ink">
-        Send to someone on Shortlist
-      </label>
-      <input
-        id={`${listId}-email`}
-        name="email"
-        type="email"
-        required
-        list={recent.length ? listId : undefined}
-        autoComplete="email"
-        placeholder="Their email address"
-        className="input py-1.5 text-sm"
-      />
-      {recent.length > 0 && (
-        <datalist id={listId}>
-          {recent.map((r) => (
-            <option key={r} value={r} />
-          ))}
-        </datalist>
-      )}
-      <textarea name="note" maxLength={300} placeholder="Add a note (optional)" className="input min-h-14 py-1.5 text-sm" />
-      {state?.error && (
-        <p role="alert" className="text-sm text-bad">
-          {state.error}
-        </p>
-      )}
-      {state?.sentTo && (
-        <p role="status" className="text-sm text-good">
-          Sent to {state.sentTo}.
-        </p>
-      )}
-      <SubmitButton className="btn btn-primary w-full py-1.5 text-sm" pending="Sending…">
-        Send
-      </SubmitButton>
-      <p className="text-xs text-muted">If they're on Shortlist it shows on their dashboard, and they get an email either way.</p>
-    </ActionForm>
-  );
-}
-
 /**
- * Share a job: send it to someone on Shortlist, email it, copy the link, or post it elsewhere.
- * Where the device has its own share menu (phones), "More options" opens it too.
+ * Share a job: first as a message to someone on Shortlist (by username), then the usual ways
+ * (email, copy link, WhatsApp...). Where the device has its own share menu, "More options" opens it.
  */
 export function ShareButton({
   url,
@@ -136,16 +88,19 @@ export function ShareButton({
           className="absolute inset-x-0 z-20 mt-1 overflow-hidden rounded-md border border-line bg-surface shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
           onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
         >
-          {signedIn ? (
-            <SendToSomeone jobId={jobId} recent={recent} />
-          ) : (
-            <p className="px-3 py-3 text-sm text-ink-2">
-              <Link href={`/login?next=/jobs/${jobId}`} className="link font-semibold">
-                Log in
-              </Link>{" "}
-              to send this job to someone on Shortlist.
-            </p>
-          )}
+          <div className="px-3 py-3">
+            <p className="mb-2 text-sm font-semibold text-ink">Send in a message</p>
+            {signedIn ? (
+              <MessageForm jobId={jobId} recent={recent} placeholder="Add a message (optional)" compact showConversationLink />
+            ) : (
+              <p className="text-sm text-ink-2">
+                <Link href={`/login?next=/jobs/${jobId}`} className="link font-semibold">
+                  Log in
+                </Link>{" "}
+                to send this job to someone on Shortlist.
+              </p>
+            )}
+          </div>
           <div className="border-t border-line py-1">
             <a className={item} href={`mailto:?subject=${encodeURIComponent(`Job: ${title}`)}&body=${encodeURIComponent(message)}`}>
               Email

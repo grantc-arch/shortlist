@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { logout } from "./actions/auth";
 import { isAdmin, siteUrl } from "@/lib/site";
+import { unreadCount } from "@/lib/messaging";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
+  const unread = session ? await unreadCount(session.userId) : 0;
   return (
     <html lang="en-ZA">
       <body className="min-h-dvh antialiased">
@@ -49,9 +51,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </>
               )}
               {session && (
-                <Link href="/settings" className="hover:text-ink">
-                  Settings
-                </Link>
+                <>
+                  <Link href="/messages" className="inline-flex items-center gap-1.5 hover:text-ink">
+                    Messages
+                    {unread > 0 && (
+                      <span className="num rounded-full bg-ink px-1.5 text-xs leading-5 font-bold text-bg">
+                        {unread > 99 ? "99+" : unread}
+                        <span className="sr-only"> unread</span>
+                      </span>
+                    )}
+                  </Link>
+                  <Link href="/settings" className="hover:text-ink">
+                    Settings
+                  </Link>
+                </>
               )}
               {isAdmin(session?.email) && (
                 <Link href="/admin" className="hover:text-ink">

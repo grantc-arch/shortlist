@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { similarJobs, similarity, titleWords, type SimilarityJob } from "./similar";
 import { csvCell, slug, toCsv } from "./csv";
 import { unsubscribeQuery, verifyUnsubscribe } from "./unsubscribe";
-import { applicantDigestEmail, applicationReceivedEmail, invitationEmail, jobSharedEmail, jobAlertEmail, statusUpdateEmail, ALERT_EMAIL_MAX_JOBS } from "./emails";
+import { applicantDigestEmail, applicationReceivedEmail, invitationEmail, jobAlertEmail, statusUpdateEmail, ALERT_EMAIL_MAX_JOBS } from "./emails";
 import { isUndeliverable } from "./email-address";
 
 const base: SimilarityJob = {
@@ -151,17 +151,6 @@ describe("emails", () => {
     expect(mail.text).toContain("What happens next");
     expect(mail.text).toContain("https://s/candidate");
     expect(mail.html).toContain("https://s/unsubscribe?x");
-  });
-
-  it("tells people who sent them a job, and invites non-members to sign up", () => {
-    const member = jobSharedEmail({ senderName: "Lerato", jobTitle: "Administrator", company: "Old School", note: "<b>You'd be great</b>", jobUrl: "https://s/jobs/1", footer });
-    expect(member.subject).toBe("Lerato shared a job with you: Administrator");
-    expect(member.html).toContain("&lt;b&gt;You'd be great&lt;/b&gt;");
-    expect(member.text).toContain("https://s/unsubscribe?x");
-    expect(member.text).not.toContain("Create a profile");
-    const guest = jobSharedEmail({ senderName: "Lerato", jobTitle: "Administrator", company: "Old School", note: "", jobUrl: "https://s/jobs/1", signupUrl: "https://s/signup" });
-    expect(guest.text).toContain("https://s/signup");
-    expect(guest.text).toContain("You won't hear from us again unless you sign up");
   });
 
   it("summarises new applicants per job", () => {

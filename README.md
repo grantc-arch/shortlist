@@ -113,6 +113,10 @@ These were picked by looking at what LinkedIn, Indeed, PNet, Welcome to the Jung
 | Application updates | One email a day listing any status changes (shortlisted, interview, hired, not progressing). A status changed by mistake and changed back that day is never emailed. |
 | Talent pool | Candidates can tick "open to opportunities". Employers then see an anonymous version of their profile (qualification, experience, skills, city, availability, but no name, contact details or CV) scored against each job, and can invite them to apply. Invitations are emailed straight away, up to 25 a day per employer. |
 
+**Messages**
+
+Everyone has a username (made from their name at sign-up, changeable in Settings). People message each other by username at `/messages`, and a job can be sent inside a message from its Share button, where "Send in a message" is the first option, followed by email, copy link, WhatsApp, Facebook, LinkedIn, X and Telegram. Messages stay inside Shortlist (no emails); the menu shows an unread count and conversations refresh every few seconds while open. Email addresses are never shown in messages. Anyone can block someone from their conversation, and sending is capped (60 messages an hour, 30 new conversations a day).
+
 **For employers**
 
 | Feature | What it does |

@@ -6,6 +6,7 @@ import { emailConfigured } from "@/lib/email";
 import { profileGaps } from "@/lib/format";
 import { ALERT_SCORES } from "@/lib/constants";
 import { saveSettings } from "@/app/actions/settings";
+import { UsernameForm } from "./username-form";
 
 export const metadata: Metadata = { title: "Settings", robots: { index: false } };
 
@@ -30,6 +31,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           Email isn't set up on this site yet, so these emails won't be sent until it is.
         </p>
       )}
+
+      <section className="section mt-8">
+        <h2 className="text-lg font-semibold">Messages</h2>
+        <p className="mt-0.5 text-sm text-ink-2">Other people on Shortlist can message you using your username.</p>
+        <UsernameForm current={user.username ?? ""} />
+      </section>
 
       <form action={saveSettings} className="mt-8 space-y-8">
         {candidate ? (
