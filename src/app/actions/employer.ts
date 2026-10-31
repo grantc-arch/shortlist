@@ -8,7 +8,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { requireRole } from "@/lib/auth";
 import { parsePlace } from "@/lib/places";
-import { normaliseWeights, parseLines, parseList } from "@/lib/matching";
+import { normaliseWeights, weightsProblem, parseLines, parseList } from "@/lib/matching";
 import { getJob, invitationsSentToday, isUuid, talentPoolFor } from "@/lib/queries";
 import { isAcceptingApplications } from "@/lib/jobs";
 import { jobSchema } from "@/lib/job-input";
@@ -42,20 +42,21 @@ function parseJobForm(form: FormData) {
     mustHaves: lines("mustHaves"),
     benefits: [...new Set(form.getAll("benefits").map(String))].filter((b) => (BENEFIT_KEYS as string[]).includes(b)),
   });
-  const weights = normaliseWeights({
+  const entered = {
     qualification: Number(form.get("w_qualification")),
     experience: Number(form.get("w_experience")),
     skills: Number(form.get("w_skills")),
     location: Number(form.get("w_location")),
     availability: Number(form.get("w_availability")),
-  });
-  return { parsed, weights };
+  };
+  return { parsed, weights: normaliseWeights(entered), weightsError: weightsProblem(entered) };
 }
 
 export async function saveJob(_: FormState, form: FormData): Promise<FormState> {
   const session = await requireRole("employer");
-  const { parsed, weights } = parseJobForm(form);
+  const { parsed, weights, weightsError } = parseJobForm(form);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (weightsError) return { error: weightsError };
   const location = parsePlace(form, "city", "Enter where the job is based");
   if ("error" in location) return { error: location.error };
   const place = { city: location.place.label, lat: location.place.lat, lng: location.place.lng };

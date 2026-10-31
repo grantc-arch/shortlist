@@ -235,17 +235,20 @@ export function toPercentages(input: Partial<Record<CriterionKey, number>>): Wei
 /** Weights from a form, as percentages adding up to 100. */
 export const normaliseWeights = toPercentages;
 
-/**
- * Sets one criterion to `value`% and shares what's left between the others in the
- * proportions they had in `base` (equally, if they were all zero), so the total stays 100.
- */
-export function rebalance(base: Weights, key: CriterionKey, value: number): Weights {
-  const v = Math.min(100, Math.max(0, Math.round(Number(value) || 0)));
-  const others = CRITERIA.map((c) => c.key).filter((k) => k !== key);
-  const shares = apportion(others.map((k) => Math.max(0, base[k])), 100 - v);
-  return Object.fromEntries(
-    CRITERIA.map(({ key: k }) => [k, k === key ? v : shares[others.indexOf(k)]]),
-  ) as Weights;
+export const weightsTotal = (w: Partial<Record<CriterionKey, number>>) =>
+  CRITERIA.reduce((sum, { key }) => sum + (Number(w[key]) || 0), 0);
+
+/** Why weights an employer entered can't be saved, or null if they're whole percentages adding up to 100. */
+export function weightsProblem(w: Partial<Record<CriterionKey, number>>): string | null {
+  for (const { key, label } of CRITERIA) {
+    const v = Number(w[key]);
+    if (!Number.isInteger(v) || v < 0 || v > 100) return `${label} must be a whole number from 0 to 100.`;
+  }
+  const total = weightsTotal(w);
+  if (total === 100) return null;
+  return total < 100
+    ? `The ranking adds up to ${total}%. Share out the other ${100 - total}% so it adds up to 100%.`
+    : `The ranking adds up to ${total}%. Take off ${total - 100}% so it adds up to 100%.`;
 }
 
 /** Splits comma- or newline-separated text into a clean, de-duplicated list. */

@@ -12,10 +12,13 @@ export function ActionForm({
   action,
   className,
   children,
+  check,
 }: {
   action: (data: FormData) => void;
   className?: string;
   children: React.ReactNode;
+  /** Runs before sending; return false to stop the form being sent. */
+  check?: () => boolean;
 }) {
   const [pending, startTransition] = useTransition();
   return (
@@ -23,6 +26,7 @@ export function ActionForm({
       className={className}
       onSubmit={(e) => {
         e.preventDefault();
+        if (check && !check()) return;
         const data = new FormData(e.currentTarget);
         startTransition(() => action(data));
       }}
