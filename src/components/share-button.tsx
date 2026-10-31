@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { MessageForm } from "@/components/message-form";
+
+const noSubscribe = () => () => {};
 
 function ShareIcon() {
   return (
@@ -13,8 +15,9 @@ function ShareIcon() {
 }
 
 /**
- * Share a job: first as a message to someone on Shortlist (by username), then the usual ways
- * (email, copy link, WhatsApp...). Where the device has its own share menu, "More options" opens it.
+ * Share a job, in a pop-up window that always fits the screen: first as a message to someone on
+ * Shortlist (by username), then the usual ways (email, copy link, WhatsApp...). Where the device
+ * has its own share menu, "More options" opens it.
  */
 export function ShareButton({
   url,
@@ -31,23 +34,18 @@ export function ShareButton({
   signedIn: boolean;
   recent?: string[];
 }) {
-  const [open, setOpen] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
   const [copied, setCopied] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  // Clicking anywhere outside the panel closes it.
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: PointerEvent) => {
-      if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, [open]);
   const text = `${title} at ${company}, on Shortlist`;
   const intro = `Thought you might like this job: ${text}`;
   const message = `${intro}. ${url}`;
   const u = encodeURIComponent(url);
-  const canSystemShare = () => typeof navigator !== "undefined" && typeof navigator.share === "function";
+  // Only known in the browser, so the server renders without "More options" and the browser adds it.
+  const canSystemShare = useSyncExternalStore(
+    noSubscribe,
+    () => typeof navigator.share === "function",
+    () => false,
+  );
 
   async function copy() {
     try {
@@ -66,65 +64,77 @@ export function ShareButton({
     ["X (Twitter)", `https://x.com/intent/post?text=${encodeURIComponent(intro)}&url=${u}`],
     ["Telegram", `https://t.me/share/url?url=${u}&text=${encodeURIComponent(intro)}`],
   ];
-  const item = "flex w-full items-center px-3 py-2 text-left text-sm text-ink hover:bg-sunken";
+  const option = "flex items-center justify-center rounded-md border border-line px-3 py-2 text-sm font-semibold text-ink hover:border-ink-2";
 
   return (
-    <div
-      ref={box}
-      className="relative"
-      // Tabbing out closes it. (Focus can also vanish while Send is busy; that mustn't close it.)
-      onBlur={(e) => {
-        if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false);
-      }}
-    >
-      <button type="button" className="btn w-full" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+    <>
+      <button type="button" className="btn w-full" onClick={() => dialog.current?.showModal()}>
         <ShareIcon />
         Share this job
       </button>
-      {open && (
-        <div
-          role="group"
-          aria-label="Share this job"
-          className="absolute inset-x-0 z-20 mt-1 overflow-hidden rounded-md border border-line bg-surface shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
-          onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
-        >
-          <div className="px-3 py-3">
-            <p className="mb-2 text-sm font-semibold text-ink">Send in a message</p>
-            {signedIn ? (
-              <MessageForm jobId={jobId} recent={recent} placeholder="Add a message (optional)" compact showConversationLink />
-            ) : (
-              <p className="text-sm text-ink-2">
-                <Link href={`/login?next=/jobs/${jobId}`} className="link font-semibold">
-                  Log in
-                </Link>{" "}
-                to send this job to someone on Shortlist.
-              </p>
-            )}
-          </div>
-          <div className="border-t border-line py-1">
-            <a className={item} href={`mailto:?subject=${encodeURIComponent(`Job: ${title}`)}&body=${encodeURIComponent(message)}`}>
+      <dialog
+        ref={dialog}
+        aria-labelledby={`share-${jobId}`}
+        className="m-auto max-h-[90dvh] w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-line bg-surface p-0 text-ink shadow-[0_12px_40px_rgba(0,0,0,0.18)] backdrop:bg-black/40"
+        // A click on the dark backdrop (outside the box) closes it.
+        onClick={(e) => {
+          if (e.target === e.currentTarget) e.currentTarget.close();
+        }}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
+          <h2 id={`share-${jobId}`} className="min-w-0 truncate font-semibold">
+            Share {title}
+          </h2>
+          <button
+            type="button"
+            aria-label="Close"
+            className="rounded px-2 py-0.5 text-xl leading-none text-muted hover:bg-sunken hover:text-ink"
+            onClick={() => dialog.current?.close()}
+          >
+            ×
+          </button>
+        </div>
+
+        <section className="px-5 py-4">
+          <h3 className="mb-2 text-sm font-semibold">Send in a message</h3>
+          {signedIn ? (
+            <MessageForm jobId={jobId} recent={recent} placeholder="Add a message (optional)" compact showConversationLink />
+          ) : (
+            <p className="text-sm text-ink-2">
+              <Link href={`/login?next=/jobs/${jobId}`} className="link font-semibold">
+                Log in
+              </Link>{" "}
+              to send this job to someone on Shortlist.
+            </p>
+          )}
+        </section>
+
+        <section className="border-t border-line px-5 py-4">
+          <h3 className="mb-2 text-sm font-semibold">Or share it another way</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <a className={option} href={`mailto:?subject=${encodeURIComponent(`Job: ${title}`)}&body=${encodeURIComponent(message)}`}>
               Email
             </a>
-            <button type="button" className={item} onClick={copy}>
+            <button type="button" className={option} onClick={copy}>
               {copied ? "Link copied" : "Copy link"}
             </button>
             {links.map(([label, href]) => (
-              <a key={label} className={item} href={href} target="_blank" rel="noreferrer">
+              <a key={label} className={option} href={href} target="_blank" rel="noreferrer">
                 {label}
               </a>
             ))}
-            {canSystemShare() && (
-              <button
-                type="button"
-                className={`${item} text-ink-2`}
-                onClick={() => navigator.share({ title: text, text: intro, url }).catch(() => {})}
-              >
-                More options…
-              </button>
-            )}
           </div>
-        </div>
-      )}
-    </div>
+          {canSystemShare && (
+            <button
+              type="button"
+              className="mt-2 w-full rounded-md px-3 py-2 text-sm text-ink-2 hover:bg-sunken"
+              onClick={() => navigator.share({ title: text, text: intro, url }).catch(() => {})}
+            >
+              More options…
+            </button>
+          )}
+        </section>
+      </dialog>
+    </>
   );
 }
