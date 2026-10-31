@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { similarJobs, similarity, titleWords, type SimilarityJob } from "./similar";
 import { csvCell, slug, toCsv } from "./csv";
 import { unsubscribeQuery, verifyUnsubscribe } from "./unsubscribe";
-import { applicantDigestEmail, invitationEmail, jobAlertEmail, statusUpdateEmail, ALERT_EMAIL_MAX_JOBS } from "./emails";
+import { applicantDigestEmail, applicationReceivedEmail, invitationEmail, jobAlertEmail, statusUpdateEmail, ALERT_EMAIL_MAX_JOBS } from "./emails";
 import { isUndeliverable } from "./email-address";
 
 const base: SimilarityJob = {
@@ -135,6 +135,21 @@ describe("emails", () => {
     expect(mail.html).not.toContain("<script>");
     expect(mail.html).toContain("&lt;b&gt;Evil&lt;/b&gt; Co");
     expect(mail.text).toContain("You score 81% for it");
+    expect(mail.html).toContain("https://s/unsubscribe?x");
+  });
+
+  it("confirms an application and says what happens next", () => {
+    const mail = applicationReceivedEmail({
+      firstName: "Pat",
+      jobTitle: "Office Assistant",
+      company: "Test Hiring Co",
+      jobUrl: "https://s/jobs/1",
+      dashboardUrl: "https://s/candidate",
+      footer,
+    });
+    expect(mail.subject).toBe("Application sent: Office Assistant at Test Hiring Co");
+    expect(mail.text).toContain("What happens next");
+    expect(mail.text).toContain("https://s/candidate");
     expect(mail.html).toContain("https://s/unsubscribe?x");
   });
 

@@ -42,7 +42,7 @@ Each open job page carries [JobPosting structured data](https://developers.googl
 
 - **Off by default.** It's switched on with `LIST_JOBS_ON_GOOGLE=true`, because Google doesn't allow fake or test postings, and anyone can sign up and post a job on a public demo.
 - **Demo companies are never listed**, and their job pages are labelled as demos and marked `noindex`.
-- **Closed jobs drop out.** A job leaves the sitemap and returns a 404 to visitors once it's closed or its closing date passes (in South African time). Closing dates set `validThrough`.
+- **Closed jobs drop out.** A job leaves the sitemap and is marked `noindex` once it's closed or its closing date passes (in South African time). Visitors following an old link see a "This job has closed" page with similar open jobs, rather than an error. Closing dates set `validThrough`.
 - Fully remote jobs are marked `TELECOMMUTE` with applicants limited to South Africa, and the description says so, as Google requires. Hybrid jobs aren't marked remote.
 
 Employers see whether each job is listed, and get a copy-link button and LinkedIn, WhatsApp and email share links. Shared links show a preview image with the job title, company, location and salary:
@@ -109,6 +109,7 @@ These were picked by looking at what LinkedIn, Indeed, PNet, Welcome to the Jung
 | Company pages | `/companies/<id>` shows the company's details and every job it has open. |
 | Benefits | Employers tick benefits (medical aid, provident fund, 13th cheque…). They show on the job and in the Google markup. |
 | Job alerts | A daily or weekly email of new jobs scoring at least the match the candidate chooses. Nothing is sent when there's nothing new. |
+| Application receipts | An email as soon as someone applies, saying what happens next |
 | Application updates | One email a day listing any status changes (shortlisted, interview, hired, not progressing). A status changed by mistake and changed back that day is never emailed. |
 | Talent pool | Candidates can tick "open to opportunities". Employers then see an anonymous version of their profile (qualification, experience, skills, city, availability, but no name, contact details or CV) scored against each job, and can invite them to apply. Invitations are emailed straight away, up to 25 a day per employer. |
 

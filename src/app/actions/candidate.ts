@@ -1,6 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { sendEmail } from "@/lib/email";
+import { applicationReceivedEmail } from "@/lib/emails";
+import { siteUrl } from "@/lib/site";
+import { unsubscribeQuery } from "@/lib/unsubscribe";
 import { revalidatePath } from "next/cache";
 import { and, count, eq, gt } from "drizzle-orm";
 import { z } from "zod";
@@ -10,7 +15,7 @@ import { MAX_CV_BYTES } from "@/lib/constants";
 import { parsePlace } from "@/lib/places";
 import { parseList, QUALIFICATION_ORDER } from "@/lib/matching";
 import { normaliseSkills } from "@/lib/skills";
-import { getApplication, getCandidate, getJob, isUuid } from "@/lib/queries";
+import { getApplication, getCandidate, getJob, getUser, isUuid } from "@/lib/queries";
 import { profileGaps } from "@/lib/format";
 import { isAcceptingApplications } from "@/lib/jobs";
 import type { FormState } from "./auth";
@@ -117,6 +122,25 @@ export async function applyForJob(_: FormState, form: FormData): Promise<FormSta
     mustHaveAnswers: answers.map((a) => a === "yes"),
     coverNote,
   });
+  // A receipt, unless they've switched off application emails in their settings.
+  if ((await getUser(session.userId))?.emailUpdates && candidate) {
+    const base = siteUrl();
+    const q = unsubscribeQuery(session.userId, "updates");
+    const mail = applicationReceivedEmail({
+      firstName: candidate.fullName.trim().split(/\s+/)[0] || "there",
+      jobTitle: row.job.title,
+      company: row.employer.companyName,
+      jobUrl: `${base}/jobs/${jobId}`,
+      dashboardUrl: `${base}/candidate`,
+      footer: { settings: `${base}/settings`, unsubscribe: `${base}/unsubscribe?${q}`, reason: "You get these because you applied for a job on Shortlist." },
+    });
+    after(() =>
+      sendEmail({ to: session.email, ...mail, unsubscribeUrl: `${base}/api/unsubscribe?${q}` }).catch((err) =>
+        console.error("Application receipt failed:", err),
+      ),
+    );
+  }
+
   // It's in their applications now, so it no longer needs to be saved.
   await db
     .delete(schema.savedJobs)

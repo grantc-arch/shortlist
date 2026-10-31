@@ -8,6 +8,7 @@ import { CITIES, EMPLOYMENT_LABELS, WORKPLACE_LABELS } from "@/lib/constants";
 import { JobList } from "@/components/job-list";
 import { AutoSubmitSelect } from "@/components/auto-submit";
 import { Pagination } from "@/components/pagination";
+import { RememberJobSearch } from "@/components/back-to-jobs";
 import { DEFAULT_PER_PAGE, paginate, parsePerPage, PER_PAGE_OPTIONS } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Jobs" };
@@ -82,6 +83,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
 
   return (
     <div>
+      <RememberJobSearch />
       <h1 className="text-3xl font-bold sm:text-4xl">Open jobs</h1>
       <p className="mt-1 text-ink-2">
         {pages > 1 ? `Showing ${start + 1}–${end} of ${rows.length} roles` : `${rows.length} ${rows.length === 1 ? "role" : "roles"}`},{" "}

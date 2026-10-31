@@ -78,8 +78,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <legend className="sr-only">Application updates</legend>
               <h2 className="text-lg font-semibold">Application updates</h2>
               <Check name="emailUpdates" defaultChecked={user.emailUpdates}>
-                Email me when an employer shortlists me, invites me to an interview or makes a decision. Updates are
-                gathered into one email a day.
+                Email me a receipt when I apply, and when an employer shortlists me, invites me to an interview or
+                makes a decision. Status updates are gathered into one email a day.
               </Check>
             </fieldset>
 

@@ -124,6 +124,11 @@ export async function applicantsForJob(jobId: string) {
     .where(eq(applications.jobId, jobId));
 }
 
+export async function applicationCount(jobId: string): Promise<number> {
+  const [{ n }] = await db.select({ n: count() }).from(applications).where(eq(applications.jobId, jobId));
+  return n;
+}
+
 export async function getCompany(employerId: string) {
   if (!isUuid(employerId)) return null;
   return (await db.query.employers.findFirst({ where: eq(employers.userId, employerId) })) ?? null;

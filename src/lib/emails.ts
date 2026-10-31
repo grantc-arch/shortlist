@@ -96,6 +96,32 @@ ${button(dashboardUrl, "See my applications")}`,
   return { subject, text, html };
 }
 
+// ── Application received (to the candidate, straight away) ────────────────
+
+export function applicationReceivedEmail(input: {
+  firstName: string;
+  jobTitle: string;
+  company: string;
+  jobUrl: string;
+  dashboardUrl: string;
+  footer: FooterLinks;
+}): RenderedEmail {
+  const { firstName, jobTitle, company, jobUrl, dashboardUrl, footer } = input;
+  const subject = `Application sent: ${jobTitle} at ${company}`;
+  const sent = `Your application for ${jobTitle} at ${company} has been sent. They can now see your profile, CV and answers.`;
+  const next = `What happens next: ${company} reviews applicants in its own time. We'll email you once a day if your status changes, for example if you're shortlisted or invited to an interview, and you can check it any time on your dashboard.`;
+  const html = layout(
+    `<p>Hi ${esc(firstName)},</p>
+<p>${esc(sent)} <a href="${esc(jobUrl)}" style="color:#171717">View the job</a></p>
+<p>${esc(next)}</p>
+${button(dashboardUrl, "See my applications")}`,
+    footer,
+    true,
+  );
+  const text = [`Hi ${firstName},`, "", sent, jobUrl, "", next, "", `See your applications: ${dashboardUrl}`, "", SAFETY, ...textFooter(footer)].join("\n");
+  return { subject, text, html };
+}
+
 // ── New applicants (to employers, once a day) ──────────────────────────────
 
 export interface ApplicantSummary {

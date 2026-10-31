@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getApplication, getCandidate, getInvitation, getJob, getReport, listOpenJobs, savedJobIds } from "@/lib/queries";
+import { applicationCount, getApplication, getCandidate, getInvitation, getJob, getReport, listOpenJobs, savedJobIds } from "@/lib/queries";
+import { BackToJobs } from "@/components/back-to-jobs";
+import type { Employer, Job } from "@/db/schema";
 import { scoreMatch } from "@/lib/matching";
 import { candidateForMatching, formatDate, jobForMatching, profileGaps } from "@/lib/format";
 import { benefitLabels, qualificationLabel, STATUS_LABELS } from "@/lib/constants";
@@ -47,7 +49,19 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
   if (closed && !isOwner && !isAdmin(session?.email)) {
     // Closed jobs stay visible to people who applied, so their application history makes sense.
     const applied = session?.role === "candidate" && (await getApplication(job.id, session.userId));
-    if (!applied) notFound();
+    if (!applied) {
+      // Reported jobs vanish. Closed ones get a page pointing to open jobs, because old links keep being shared.
+      if (closed === "hidden") notFound();
+      const open = await listOpenJobs();
+      return (
+        <ClosedJob
+          job={job}
+          employer={employer}
+          similar={similarJobs(job, open)}
+          companyOpen={open.filter((r) => r.job.employerId === job.employerId).length}
+        />
+      );
+    }
   }
 
   const candidate = session?.role === "candidate" ? await getCandidate(session.userId) : null;
@@ -64,6 +78,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
     ? scoreMatch(jobForMatching(job), candidateForMatching(candidate), application?.mustHaveAnswers ?? null)
     : null;
   const gaps = candidate ? profileGaps(candidate) : [];
+  const applicants = !closed && !isOwner && !application ? await applicationCount(job.id) : null;
   const jobPosting = isListableOnGoogle(job, employer, googleJobsEnabled())
     ? jsonLdScript(buildJobPosting(job, employer, siteUrl()))
     : null;
@@ -91,9 +106,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
             This is a demo listing for a fictional company, there to show how Shortlist works. It isn't a real job.
           </p>
         )}
-        <Link href="/jobs" className="text-sm text-muted hover:text-ink">
-          All jobs
-        </Link>
+        <BackToJobs className="text-sm text-muted hover:text-ink" />
         <h1 className="mt-2 text-4xl font-bold sm:text-5xl">{job.title}</h1>
         <p className="mt-2 text-lg text-ink-2">
           <Link href={`/companies/${employer.userId}`} className="link">
@@ -113,6 +126,14 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
                 <ClosingSoon closesOn={job.closesOn} />
               </>
             )}
+          </p>
+        )}
+
+        {applicants !== null && (
+          <p className="mt-2 text-sm font-semibold text-good">
+            {applicants < FIRST_APPLICANTS
+              ? `Be one of the first ${FIRST_APPLICANTS} applicants`
+              : `${applicants} people have applied`}
           </p>
         )}
 
@@ -303,6 +324,53 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
           </div>
         )}
       </aside>
+    </div>
+  );
+}
+
+/** Below this many applicants, a job invites people to be among the first. */
+const FIRST_APPLICANTS = 10;
+
+/** Shown instead of a closed job, so shared links still lead somewhere useful. */
+function ClosedJob({
+  job,
+  employer,
+  similar,
+  companyOpen,
+}: {
+  job: Job;
+  employer: Employer;
+  similar: { job: Job; companyName: string }[];
+  companyOpen: number;
+}) {
+  return (
+    <div className="max-w-3xl">
+      <BackToJobs className="text-sm text-muted hover:text-ink" />
+      <p className="mt-6 text-sm font-semibold text-muted">
+        {closedReason(job) === "deadline" && job.closesOn ? `Applications closed ${formatDate(job.closesOn)}` : "No longer taking applications"}
+      </p>
+      <h1 className="mt-1 text-3xl font-bold sm:text-4xl">This job has closed</h1>
+      <p className="mt-2 text-lg text-ink-2">
+        {job.title} at {employer.companyName}
+      </p>
+      <div className="mt-5 flex flex-wrap gap-2">
+        {companyOpen > 0 && (
+          <Link href={`/companies/${employer.userId}`} className="btn btn-primary">
+            See {employer.companyName}'s {companyOpen} open {companyOpen === 1 ? "job" : "jobs"}
+          </Link>
+        )}
+        <Link href="/jobs" className={companyOpen > 0 ? "btn" : "btn btn-primary"}>
+          Browse all jobs
+        </Link>
+      </div>
+      {similar.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-xl font-semibold">Similar jobs that are still open</h2>
+          <div className="mt-3">
+            <JobList items={similar} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }
