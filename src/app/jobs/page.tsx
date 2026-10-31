@@ -7,6 +7,8 @@ import { candidateForMatching, jobForMatching } from "@/lib/format";
 import { CITIES, EMPLOYMENT_LABELS, WORKPLACE_LABELS } from "@/lib/constants";
 import { JobList } from "@/components/job-list";
 import { AutoSubmitSelect } from "@/components/auto-submit";
+import { Pagination } from "@/components/pagination";
+import { DEFAULT_PER_PAGE, paginate, parsePerPage, PER_PAGE_OPTIONS } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Jobs" };
 
@@ -20,7 +22,17 @@ const POSTED = [
 const SORTS = { match: "Best match", newest: "Newest", salary: "Highest salary", closing: "Closing soonest" } as const;
 type Sort = keyof typeof SORTS;
 
-type Params = { q?: string; city?: string; workplace?: string; type?: string; salary?: string; posted?: string; sort?: string };
+type Params = {
+  q?: string;
+  city?: string;
+  workplace?: string;
+  type?: string;
+  salary?: string;
+  posted?: string;
+  sort?: string;
+  page?: string;
+  per?: string;
+};
 
 const pick = <T extends string>(value: string | undefined, allowed: readonly T[]) =>
   allowed.includes(value as T) ? (value as T) : undefined;
@@ -54,13 +66,26 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   if (sort === "salary") items.sort((a, b) => pay(b.job) - pay(a.job));
   if (sort === "closing") items.sort((a, b) => (a.job.closesOn ?? "9999").localeCompare(b.job.closesOn ?? "9999"));
 
+  const perPage = parsePerPage(params.per);
+  const { page, pages, start, end } = paginate(items.length, params.page, perPage);
+  const shown = items.slice(start, end);
+  // Links to other pages keep the search, filters, sort and page size.
+  const hrefFor = (n: number) => {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v && k !== "page") q.set(k, v);
+    if (n > 1) q.set("page", String(n));
+    const query = q.toString();
+    return `/jobs${query ? `?${query}` : ""}`;
+  };
+
   const filtered = !!(filters.q || filters.city || filters.workplace || filters.type || filters.minSalary || filters.postedDays);
 
   return (
     <div>
       <h1 className="text-3xl font-bold sm:text-4xl">Open jobs</h1>
       <p className="mt-1 text-ink-2">
-        {rows.length} {rows.length === 1 ? "role" : "roles"}, {SORTS[sort].toLowerCase()} first
+        {pages > 1 ? `Showing ${start + 1}–${end} of ${rows.length} roles` : `${rows.length} ${rows.length === 1 ? "role" : "roles"}`},{" "}
+        {SORTS[sort].toLowerCase()} first
       </p>
 
       <form className="mt-5 space-y-3" role="search">
@@ -93,11 +118,18 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
             options={POSTED.map((p) => [String(p.days), p.label])}
             any="Any time"
           />
-          <span className="flex items-center gap-2 sm:ml-auto">
+          <span className="flex flex-wrap items-center gap-2 sm:ml-auto">
             <label htmlFor="sort" className="text-sm text-muted">Sort</label>
             <AutoSubmitSelect id="sort" name="sort" defaultValue={sort} className="input w-auto py-1.5 text-sm">
               {sortOptions.map((s) => (
                 <option key={s} value={s}>{SORTS[s]}</option>
+              ))}
+            </AutoSubmitSelect>
+            <label htmlFor="per" className="sr-only">Jobs per page</label>
+            {/* Changing the page size starts again from page 1, because the form has no page field. */}
+            <AutoSubmitSelect id="per" name="per" defaultValue={perPage === DEFAULT_PER_PAGE ? "" : String(perPage)} className="input w-auto py-1.5 text-sm">
+              {PER_PAGE_OPTIONS.map((n) => (
+                <option key={n} value={n === DEFAULT_PER_PAGE ? "" : String(n)}>{n} per page</option>
               ))}
             </AutoSubmitSelect>
           </span>
@@ -133,7 +165,10 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
 
       <div className="mt-6">
         {items.length > 0 ? (
-          <JobList items={items} savedIds={saved} signedInAsCandidate={!!candidate} />
+          <>
+            <JobList items={shown} savedIds={saved} signedInAsCandidate={!!candidate} />
+            <Pagination page={page} pages={pages} hrefFor={hrefFor} />
+          </>
         ) : (
           <div className="box p-8 text-center">
             <p className="font-semibold">No open jobs match that search.</p>
