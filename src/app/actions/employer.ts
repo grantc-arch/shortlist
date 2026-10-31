@@ -19,6 +19,7 @@ import { jobForMatching } from "@/lib/format";
 import { sendEmail } from "@/lib/email";
 import { invitationEmail } from "@/lib/emails";
 import { siteUrl } from "@/lib/site";
+import { detectLogoType, MAX_LOGO_BYTES } from "@/lib/logos";
 import { unsubscribeQuery } from "@/lib/unsubscribe";
 import type { FormState } from "./auth";
 
@@ -216,4 +217,33 @@ export async function saveEmployerProfile(_: FormState, form: FormData): Promise
     .where(eq(schema.employers.userId, session.userId));
   revalidatePath("/", "layout");
   redirect("/employer?saved=1");
+}
+
+// ── Company logo ───────────────────────────────────────────────────────────
+
+export type LogoState = { error?: string; updatedAt?: number } | undefined;
+
+/** Saves the company's logo. The browser has already resized it; this checks it's really a small PNG, JPEG or WebP. */
+export async function uploadCompanyLogo(form: FormData): Promise<LogoState> {
+  const session = await requireRole("employer");
+  const file = form.get("logo");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose an image first." };
+  if (file.size > MAX_LOGO_BYTES) return { error: "That image is too large. Try a PNG or JPG under 5 MB." };
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const type = detectLogoType(bytes);
+  if (!type) return { error: "Use a PNG, JPG, WebP or SVG image." };
+  const now = new Date();
+  await db
+    .insert(schema.companyLogos)
+    .values({ employerId: session.userId, data: bytes, contentType: type, updatedAt: now })
+    .onConflictDoUpdate({ target: schema.companyLogos.employerId, set: { data: bytes, contentType: type, updatedAt: now } });
+  revalidatePath("/", "layout");
+  return { updatedAt: now.getTime() };
+}
+
+export async function removeCompanyLogo(): Promise<LogoState> {
+  const session = await requireRole("employer");
+  await db.delete(schema.companyLogos).where(eq(schema.companyLogos.employerId, session.userId));
+  revalidatePath("/", "layout");
+  return { updatedAt: Date.now() };
 }

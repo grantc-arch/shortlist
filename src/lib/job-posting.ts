@@ -96,7 +96,7 @@ export interface JobPostingLd {
   [property: string]: unknown;
 }
 
-export function buildJobPosting(job: Job, employer: JobEmployer, baseUrl: string): JobPostingLd {
+export function buildJobPosting(job: Job, employer: JobEmployer, baseUrl: string, logoUrl?: string): JobPostingLd {
   const url = `${baseUrl}/jobs/${job.id}`;
   const remote = job.workplace === "remote";
   const known = job.city !== "Other";
@@ -131,6 +131,7 @@ export function buildJobPosting(job: Job, employer: JobEmployer, baseUrl: string
       "@type": "Organization",
       name: employer.companyName,
       ...(employer.website ? { sameAs: employer.website } : {}),
+      ...(logoUrl ? { logo: logoUrl } : {}),
     },
     ...(remote
       ? {

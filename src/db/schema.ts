@@ -96,6 +96,17 @@ export const employers = pgTable("employers", {
   applicantsDigestAt: timestamp("applicants_digest_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Company logos, kept apart from `employers` so ordinary company lookups never load image bytes.
+// Resized in the browser before upload; only PNG, JPEG and WebP are stored (never SVG).
+export const companyLogos = pgTable("company_logos", {
+  employerId: uuid("employer_id")
+    .primaryKey()
+    .references(() => employers.userId, { onDelete: "cascade" }),
+  data: bytea("data").notNull(),
+  contentType: text("content_type").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const candidates = pgTable("candidates", {
   userId: uuid("user_id")
     .primaryKey()

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { getEmployer, jobsForEmployer } from "@/lib/queries";
+import { getEmployer, jobsForEmployer, logoVersion } from "@/lib/queries";
+import { CompanyLogo } from "@/components/company-logo";
 import { rankedApplicants } from "@/lib/ranking";
 import { formatDate } from "@/lib/format";
 import { ScoreNumber } from "@/components/fit-bar";
@@ -14,6 +15,7 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
   const session = await requireRole("employer", "/employer");
   const { saved, passwordReset } = await searchParams;
   const employer = (await getEmployer(session.userId))!;
+  const logo = await logoVersion(session.userId);
   const rows = await jobsForEmployer(session.userId);
 
   // Summary per job: how many are new, and the best match so far.
@@ -32,17 +34,25 @@ export default async function EmployerHome({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold sm:text-4xl">{employer.companyName}</h1>
-          <p className="mt-1 text-ink-2">{employer.city}</p>
-          <ul className="mt-2 space-y-1 text-sm">
-            <li>
-              <Link href="/employer/profile" className="link">Edit company details</Link>
-            </li>
-            <li>
-              <Link href={`/companies/${employer.userId}`} className="link">View your company page</Link>
-            </li>
-          </ul>
+        <div className="flex items-start gap-4">
+          <CompanyLogo employerId={employer.userId} name={employer.companyName} size="lg" version={logo} className="max-sm:size-14" />
+          <div>
+            <h1 className="text-3xl font-bold sm:text-4xl">{employer.companyName}</h1>
+            <p className="mt-1 text-ink-2">{employer.city}</p>
+            <ul className="mt-2 space-y-1 text-sm">
+              <li>
+                <Link href="/employer/profile" className="link">Edit company details</Link>
+              </li>
+              <li>
+                <Link href={`/companies/${employer.userId}`} className="link">View your company page</Link>
+              </li>
+              {!logo && (
+                <li>
+                  <Link href="/employer/profile" className="link font-semibold">Add your logo</Link>
+                </li>
+              )}
+            </ul>
+          </div>
         </div>
         <Link href="/employer/jobs/new" className="btn btn-primary">
           Post a job

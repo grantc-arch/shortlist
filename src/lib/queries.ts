@@ -87,6 +87,16 @@ export async function getEmployer(userId: string) {
   return (await db.query.employers.findFirst({ where: eq(employers.userId, userId) })) ?? null;
 }
 
+/** When the company's logo last changed, or null if it hasn't uploaded one. */
+export async function logoVersion(employerId: string): Promise<Date | null> {
+  const [row] = await db
+    .select({ updatedAt: schema.companyLogos.updatedAt })
+    .from(schema.companyLogos)
+    .where(eq(schema.companyLogos.employerId, employerId))
+    .catch(() => []);
+  return row?.updatedAt ?? null;
+}
+
 export async function getApplication(jobId: string, candidateId: string) {
   return (
     (await db.query.applications.findFirst({

@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getCandidate, getCompany, listOpenJobs, savedJobIds } from "@/lib/queries";
+import { getCandidate, getCompany, listOpenJobs, logoVersion, savedJobIds } from "@/lib/queries";
 import { scoreMatch } from "@/lib/matching";
 import { candidateForMatching, jobForMatching } from "@/lib/format";
 import { googleJobsEnabled } from "@/lib/site";
 import { JobList } from "@/components/job-list";
+import { CompanyLogo } from "@/components/company-logo";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const company = await getCompany((await params).id);
@@ -32,6 +33,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
     match: candidate ? scoreMatch(jobForMatching(r.job), candidateForMatching(candidate)) : null,
   }));
   const isOwner = session?.userId === company.userId;
+  const logo = await logoVersion(company.userId);
   let website: URL | null = null;
   try {
     website = company.website ? new URL(company.website) : null;
@@ -47,18 +49,21 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
         </p>
       )}
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold sm:text-4xl">{company.companyName}</h1>
-          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-ink-2">
-            <li>{company.city}</li>
-            {website && (
-              <li>
-                <a href={website.toString()} className="link" rel="nofollow ugc noopener" target="_blank">
-                  {website.hostname.replace(/^www\./, "")}
-                </a>
-              </li>
-            )}
-          </ul>
+        <div className="flex items-start gap-4">
+          <CompanyLogo employerId={company.userId} name={company.companyName} size="lg" version={logo} />
+          <div>
+            <h1 className="text-3xl font-bold sm:text-4xl">{company.companyName}</h1>
+            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-ink-2">
+              <li>{company.city}</li>
+              {website && (
+                <li>
+                  <a href={website.toString()} className="link" rel="nofollow ugc noopener" target="_blank">
+                    {website.hostname.replace(/^www\./, "")}
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
         </div>
         {isOwner && (
           <Link href="/employer/profile" className="btn">

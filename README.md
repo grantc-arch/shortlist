@@ -107,6 +107,7 @@ These were picked by looking at what LinkedIn, Indeed, PNet, Welcome to the Jung
 | Filters and sorting | Workplace, job type, minimum salary and date posted, sorted by best match, newest, highest salary or closing soonest. Jobs closing within a week say so. |
 | Similar jobs | Each job page suggests up to three open jobs sharing skills, title words or field ([`src/lib/similar.ts`](src/lib/similar.ts)). |
 | Company pages | `/companies/<id>` shows the company's details and every job it has open. |
+| Company logos | Employers upload a logo under Company details. The browser shrinks it to 256px (WebP) before upload; the server only accepts real PNG, JPEG or WebP files. It shows on job lists, job pages, the company page and in Google job data. Companies without one get a tile with their initials. Served from `/logos/<id>`. |
 | Benefits | Employers tick benefits (medical aid, provident fund, 13th cheque…). They show on the job and in the Google markup. |
 | Job alerts | A daily or weekly email of new jobs scoring at least the match the candidate chooses. Nothing is sent when there's nothing new. |
 | Application receipts | An email as soon as someone applies, saying what happens next |

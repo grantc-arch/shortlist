@@ -40,8 +40,8 @@ export default function PrivacyPage() {
           your application.
         </p>
         <p>
-          <strong className="text-ink">Employers:</strong> your company name, where you're based, a description and
-          website, and the jobs you post.
+          <strong className="text-ink">Employers:</strong> your company name, where you're based, a description,
+          website and logo, and the jobs you post.
         </p>
         <p>
           <strong className="text-ink">What you do on the site:</strong> jobs you save, your job alert choices, whether

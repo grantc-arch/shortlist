@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CompanyLogo } from "@/components/company-logo";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { recentContacts } from "@/lib/messaging";
-import { applicationCount, getApplication, getCandidate, getInvitation, getJob, getReport, listOpenJobs, savedJobIds } from "@/lib/queries";
+import { applicationCount, getApplication, getCandidate, getInvitation, getJob, getReport, listOpenJobs, savedJobIds, logoVersion } from "@/lib/queries";
 import { BackToJobs } from "@/components/back-to-jobs";
 import { ShareButton } from "@/components/share-button";
 import type { Employer, Job } from "@/db/schema";
@@ -47,6 +48,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
 
   const session = await getSession();
   const isOwner = session?.role === "employer" && session.userId === job.employerId;
+  const logo = await logoVersion(employer.userId);
   const closed = closedReason(job);
   if (closed && !isOwner && !isAdmin(session?.email)) {
     // Closed jobs stay visible to people who applied, so their application history makes sense.
@@ -82,7 +84,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
   const gaps = candidate ? profileGaps(candidate) : [];
   const applicants = !closed && !isOwner && !application ? await applicationCount(job.id) : null;
   const jobPosting = isListableOnGoogle(job, employer, googleJobsEnabled())
-    ? jsonLdScript(buildJobPosting(job, employer, siteUrl()))
+    ? jsonLdScript(buildJobPosting(job, employer, siteUrl(), logo ? `${siteUrl()}/logos/${employer.userId}` : undefined))
     : null;
 
   return (
@@ -111,11 +113,12 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
           )}
           <BackToJobs className="text-sm text-muted hover:text-ink" />
           <h1 className="mt-2 text-4xl font-bold sm:text-5xl">{job.title}</h1>
-          <p className="mt-2 text-lg text-ink-2">
-            <Link href={`/companies/${employer.userId}`} className="link">
-              {employer.companyName}
+          <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-lg text-ink-2">
+            <Link href={`/companies/${employer.userId}`} className="flex items-center gap-3">
+              <CompanyLogo employerId={employer.userId} name={employer.companyName} size="sm" version={logo} />
+              <span className="link">{employer.companyName}</span>
             </Link>
-            {closed && <span className="ml-2 text-bad">Closed to new applications</span>}
+            {closed && <span className="text-bad">Closed to new applications</span>}
           </p>
           <div className="mt-4">
             <JobMeta job={job} />
@@ -227,7 +230,10 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
           )}
 
           <section className="mt-8 max-w-prose">
-            <h2 className="text-xl font-semibold">About {employer.companyName}</h2>
+            <div className="flex items-center gap-3">
+              <CompanyLogo employerId={employer.userId} name={employer.companyName} size="sm" version={logo} />
+              <h2 className="text-xl font-semibold">About {employer.companyName}</h2>
+            </div>
             {employer.about && <p className="mt-2 text-ink-2">{employer.about}</p>}
             <p className="mt-2">
               <Link href={`/companies/${employer.userId}`} className="link text-sm">

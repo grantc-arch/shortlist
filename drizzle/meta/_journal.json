@@ -50,6 +50,13 @@
       "when": 1793445274670,
       "tag": "0006_messaging",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793467315590,
+      "tag": "0007_company_logos",
+      "breakpoints": true
     }
   ]
 }

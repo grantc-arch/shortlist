@@ -6,6 +6,7 @@ import { formatDate, formatSalary, timeAgo } from "@/lib/format";
 import { daysUntilClose } from "@/lib/jobs";
 import { FitBar, ScoreNumber } from "./fit-bar";
 import { SaveJobButton } from "./save-job";
+import { CompanyLogo } from "./company-logo";
 
 export interface JobListItem {
   job: Job;
@@ -56,29 +57,32 @@ export function JobList({
     <ul className="list divide-y divide-line">
       {items.map(({ job, companyName, match }) => (
         <li key={job.id} className="relative grid gap-4 p-5 sm:grid-cols-[1fr_11rem] sm:items-center">
-          <div className="min-w-0">
-            <h3 className="text-lg font-semibold">
-              <Link href={`/jobs/${job.id}`} className="after:absolute after:inset-0 hover:underline">
-                {job.title}
-              </Link>
-            </h3>
-            <p className="text-ink-2">
-              {companyName}
-              <span className="text-muted"> posted {timeAgo(job.createdAt)}</span>
-            </p>
-            <div className="mt-2">
-              <JobMeta job={job} />
-            </div>
-            {(savedIds || daysUntilClose(job.closesOn) !== null) && (
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                {savedIds && (
-                  <span className="-ml-1.5">
-                    <SaveJobButton jobId={job.id} saved={savedIds.has(job.id)} signedInAsCandidate={signedInAsCandidate} compact />
-                  </span>
-                )}
-                <ClosingSoon closesOn={job.closesOn} />
+          <div className="flex min-w-0 gap-4">
+            <CompanyLogo employerId={job.employerId} name={companyName} className="mt-0.5 max-sm:size-10" />
+            <div className="min-w-0">
+              <h3 className="text-lg font-semibold">
+                <Link href={`/jobs/${job.id}`} className="after:absolute after:inset-0 hover:underline">
+                  {job.title}
+                </Link>
+              </h3>
+              <p className="text-ink-2">
+                {companyName}
+                <span className="text-muted"> posted {timeAgo(job.createdAt)}</span>
+              </p>
+              <div className="mt-2">
+                <JobMeta job={job} />
               </div>
-            )}
+              {(savedIds || daysUntilClose(job.closesOn) !== null) && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                  {savedIds && (
+                    <span className="-ml-1.5">
+                      <SaveJobButton jobId={job.id} saved={savedIds.has(job.id)} signedInAsCandidate={signedInAsCandidate} compact />
+                    </span>
+                  )}
+                  <ClosingSoon closesOn={job.closesOn} />
+                </div>
+              )}
+            </div>
           </div>
           {match && (
             <div className="sm:text-right">
