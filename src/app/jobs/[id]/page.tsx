@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { applicationCount, getApplication, getCandidate, getInvitation, getJob, getReport, listOpenJobs, savedJobIds } from "@/lib/queries";
 import { BackToJobs } from "@/components/back-to-jobs";
+import { ShareButton } from "@/components/share-button";
 import type { Employer, Job } from "@/db/schema";
 import { scoreMatch } from "@/lib/matching";
 import { candidateForMatching, formatDate, jobForMatching, profileGaps } from "@/lib/format";
@@ -129,6 +130,11 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
           </p>
         )}
 
+        {!closed && (
+          <div className="mt-4">
+            <ShareButton url={`${siteUrl()}/jobs/${job.id}`} title={job.title} company={employer.companyName} />
+          </div>
+        )}
         {applicants !== null && (
           <p className="mt-2 text-sm font-semibold text-good">
             {applicants < FIRST_APPLICANTS
